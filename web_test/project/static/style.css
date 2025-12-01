@@ -1,0 +1,764 @@
+/* ========================
+   GLOBAL STYLES
+   ======================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========================
+   HEADER WITH STATUS PANEL
+   ======================== */
+.header {
+    background: linear-gradient(90deg, #16213e 0%, #0f3460 100%);
+    padding: 25px 20px;
+    border-bottom: 3px solid #00d4ff;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 30px;
+    flex-wrap: wrap;
+}
+
+.title {
+    font-size: 2.2em;
+    background: linear-gradient(135deg, #00d4ff, #0099ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+/* Status Lights Panel */
+.status-panel {
+    display: flex;
+    gap: 25px;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.status-panel-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+}
+
+/* Traffic light panel - đèn giao thông hiển thị ngang với thời gian bên cạnh */
+.traffic-light-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    margin-bottom: 0;
+    background: linear-gradient(135deg, rgba(20,60,100,0.5), rgba(15,50,90,0.5));
+    padding: 20px;
+    border-radius: 14px;
+    border: 2px solid rgba(0,212,255,0.3);
+    box-shadow: 0 0 40px rgba(0,212,255,0.15);
+}
+
+.traffic-light-item {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 16px 18px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 12px;
+    border: 2px solid rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+.traffic-light-item.active {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(0,212,255,0.5);
+    transform: scale(1.05);
+    box-shadow: 0 0 30px rgba(0,212,255,0.2);
+}
+
+.traffic-light-item .light {
+    width: 48px;
+    height: 48px;
+    flex-shrink: 0;
+    box-shadow: 0 0 35px currentColor;
+}
+
+.light-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+}
+
+.light-label {
+    font-weight: 700;
+    font-size: 0.95em;
+    color: #e0e0e0;
+}
+
+.light-time {
+    font-size: 1.2em;
+    font-weight: 800;
+    font-family: 'Courier New', monospace;
+    color: #00d4ff;
+}
+
+.light {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    box-shadow: 0 0 20px currentColor;
+    opacity: 0.3;
+    transition: opacity 0.4s ease, transform 0.3s ease;
+}
+
+.light.red {
+    background: #ff4444;
+    color: #ff4444;
+}
+
+.light.yellow {
+    background: #ffaa00;
+    color: #ffaa00;
+}
+
+.light.green {
+    background: #44dd44;
+    color: #44dd44;
+}
+
+.traffic-light-item.active .light {
+    opacity: 1;
+    transform: scale(1.15) drop-shadow(0 0 30px currentColor);
+}
+
+.traffic-light-item span {
+    font-size: 0.85em;
+    font-weight: 500;
+    opacity: 0.7;
+}
+
+.traffic-light-item.active span {
+    opacity: 1;
+    color: #00d4ff;
+}
+
+/* Time Display */
+.time-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    background: rgba(0, 212, 255, 0.1);
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    min-width: 90px;
+}
+
+.time-label {
+    font-size: 0.75em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.6;
+}
+
+.time-value {
+    font-size: 1.1em;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #00d4ff;
+}
+
+.time-display-compact {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+/* Per-class seconds panel (s/xe) */
+.persec-panel {
+    margin-top: 12px;
+    padding: 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.persec-title {
+    color: #00d4ff;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.persec-grid {
+    display: grid;
+    grid-template-columns: repeat(1, 1fr);
+    gap: 10px;
+}
+.persec-item, .persec-item.wide-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    background: rgba(0,0,0,0.02);
+    border-radius: 8px;
+}
+.persec-label {
+    color: #99aabb;
+    font-size: 1em;
+    font-weight: 700;
+}
+.persec-input, .persec-input.wide-input {
+    width: 120px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.2);
+    background: rgba(255,255,255,0.02);
+    color: #e0e0e0;
+}
+.persec-note {
+    margin-top: 8px;
+    font-size: 0.85em;
+    color: #99aabb;
+}
+
+/* Light times display - hiển thị thời gian cho mỗi đèn (dùng ID từ HTML) */
+/* Note: IDs #redTime, #yellowTime, #greenTime nằm bên trong .traffic-light-item  */
+
+/* ========================
+   MAIN CONTAINER
+   ======================== */
+.container {
+    flex: 1;
+    max-width: none;
+    width: calc(100% - 32px);
+    margin: 12px auto;
+    padding: 0 16px;
+}
+
+/* Main content layout: 3 rows */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Row 1: Top (input left + lights right) */
+.top-row {
+    display: grid;
+    grid-template-columns: 1fr 0.6fr;
+    gap: 12px; /* closer together */
+}
+
+.input-section {
+    flex: 1;
+}
+
+.lights-section {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+/* Row 2: Middle (images full width, side-by-side) */
+.middle-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* Row 3: Bottom (config left + counts right) */
+.bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.config-section {
+    background: linear-gradient(135deg, rgba(16, 52, 96, 0.4), rgba(15, 52, 96, 0.4));
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.counts-section {
+    background: linear-gradient(135deg, rgba(16, 52, 96, 0.4), rgba(15, 52, 96, 0.4));
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+}
+
+.section-title {
+    color: #00d4ff;
+    margin-bottom: 16px;
+    font-weight: 700;
+    font-size: 1.1em;
+}
+
+/* ========================
+   CONTROL PANEL
+   ======================== */
+.control-panel {
+    background: linear-gradient(135deg, rgba(16, 52, 96, 0.8), rgba(15, 52, 96, 0.8));
+    padding: 30px;
+    border-radius: 15px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    margin-bottom: 30px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+}
+
+.form-group {
+    display: grid;
+    gap: 20px;
+}
+
+.form-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-label {
+    font-size: 1em;
+    font-weight: 600;
+    color: #00d4ff;
+    text-align: left;
+}
+
+.form-label .value {
+    color: #ffaa00;
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+}
+
+/* File Input */
+.file-input {
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px dashed rgba(0, 212, 255, 0.5);
+    border-radius: 8px;
+    color: #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95em;
+}
+
+.file-input:hover {
+    border-color: #00d4ff;
+    background: rgba(0, 212, 255, 0.05);
+}
+
+.file-input::file-selector-button {
+    background: #00d4ff;
+    color: #0f0f1e;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.file-input::file-selector-button:hover {
+    background: #00b8ff;
+    transform: translateY(-2px);
+}
+
+.file-name {
+    font-size: 0.9em;
+    color: #999;
+    font-style: italic;
+}
+
+/* Range Slider */
+.slider {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: linear-gradient(90deg, rgba(0, 212, 255, 0.3), rgba(0, 212, 255, 0.1));
+    outline: none;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d4ff, #0099ff);
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+    transition: all 0.2s ease;
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.8);
+}
+
+.slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #00d4ff, #0099ff);
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 15px rgba(0, 212, 255, 0.5);
+    transition: all 0.2s ease;
+}
+
+.slider::-moz-range-thumb:hover {
+    transform: scale(1.2);
+    box-shadow: 0 0 25px rgba(0, 212, 255, 0.8);
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #00d4ff, #0099ff);
+    color: #0f0f1e;
+    padding: 14px 32px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 212, 255, 0.3);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    align-self: flex-start;
+}
+
+.btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 212, 255, 0.5);
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #44dd44, #00aa00);
+    color: white;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(68, 221, 68, 0.3);
+    display: inline-block;
+    margin-top: 15px;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(68, 221, 68, 0.5);
+}
+
+.btn-secondary:active {
+    transform: translateY(0);
+}
+
+/* ========================
+   LOADING INDICATOR
+   ======================== */
+.loading-indicator {
+    display: none;
+    text-align: center;
+    margin: 40px 0;
+    padding: 30px;
+}
+
+.spinner {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 20px;
+    border: 4px solid rgba(0, 212, 255, 0.2);
+    border-top: 4px solid #00d4ff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-indicator p {
+    font-size: 1.2em;
+    color: #ffaa00;
+    font-weight: 600;
+}
+
+/* ========================
+   RESULTS SECTION
+   ======================== */
+.results-section {
+    margin-top: 40px;
+    margin-bottom: 40px;
+}
+
+.results-top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.image-box {
+    background: linear-gradient(135deg, rgba(16, 52, 96, 0.6), rgba(15, 52, 96, 0.6));
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.image-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px rgba(0, 212, 255, 0.2);
+}
+
+.image-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(0, 212, 255, 0.2);
+}
+
+.image-header h2 {
+    font-size: 1.3em;
+    color: #00d4ff;
+    margin: 0;
+}
+
+.badge {
+    background: rgba(255, 170, 0, 0.3);
+    color: #ffaa00;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+    border: 1px solid #ffaa00;
+}
+
+.badge.success {
+    background: rgba(68, 221, 68, 0.3);
+    color: #44dd44;
+    border-color: #44dd44;
+}
+
+.image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    min-height: 55vh; /* scale relative to viewport for automatic zoom-to-fit */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid rgba(0, 212, 255, 0.2);
+}
+
+.result-image {
+    width: 100%;
+    height: auto;
+    max-height: calc(80vh - 120px);
+    object-fit: contain;
+    border-radius: 8px;
+    display: none;
+}
+
+.result-image.active {
+    display: block;
+}
+
+.divider {
+    width: 2px;
+    background: linear-gradient(180deg, transparent, rgba(0, 212, 255, 0.5), transparent);
+    min-height: 300px;
+}
+
+/* Counts grid */
+.counts-panel {
+    margin-top: 8px;
+    background: linear-gradient(135deg, rgba(10,20,40,0.6), rgba(8,18,36,0.6));
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,212,255,0.12);
+}
+
+/* Layout helper: place traffic lights next to counts */
+.counts-traffic-wrap {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+/* Make traffic panel visually matching counts size */
+.traffic-light-panel {
+    min-width: 160px;
+}
+
+.counts-title {
+    color: #00d4ff;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.counts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 22px;
+    width: 100%;
+}
+
+.count-box {
+    background: rgba(255,255,255,0.04);
+    padding: 22px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(0,0,0,0.18);
+    min-height: 120px;
+}
+
+.count-value {
+    font-size: 2.6em;
+    font-weight: 900;
+    color: #00d4ff;
+}
+
+.count-label {
+    margin-top: 6px;
+    color: #99aabb;
+    font-weight: 600;
+}
+
+/* ========================
+   ERROR MESSAGE
+   ======================== */
+.error-message {
+    display: none;
+    background: linear-gradient(135deg, rgba(255, 68, 68, 0.2), rgba(200, 0, 0, 0.2));
+    color: #ff6666;
+    padding: 16px 20px;
+    border-radius: 8px;
+    border-left: 4px solid #ff4444;
+    margin: 20px 0;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* ========================
+   FOOTER
+   ======================== */
+.footer {
+    background: linear-gradient(90deg, #16213e 0%, #0f3460 100%);
+    text-align: center;
+    padding: 20px;
+    border-top: 2px solid rgba(0, 212, 255, 0.2);
+    color: #999;
+    font-size: 0.9em;
+    margin-top: auto;
+}
+
+/* ========================
+   RESPONSIVE DESIGN
+   ======================== */
+@media (max-width: 1024px) {
+    .image-container {
+        grid-template-columns: 1fr;
+    }
+
+    .divider {
+        display: none;
+    }
+
+    .header-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .title {
+        font-size: 1.8em;
+    }
+}
+
+@media (max-width: 768px) {
+    .status-panel {
+        flex-wrap: wrap;
+        gap: 15px;
+        width: 100%;
+    }
+
+    .control-panel {
+        padding: 20px;
+    }
+
+    .btn-primary {
+        width: 100%;
+        align-self: stretch;
+    }
+
+    .header-content {
+        gap: 15px;
+    }
+
+    .time-display {
+        min-width: unset;
+    }
+}

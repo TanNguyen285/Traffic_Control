@@ -1,0 +1,6 @@
+car
+threewheel
+bus
+truck
+motorbike
+van

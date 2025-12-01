@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Object Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="title">🔍 YOLOv8 Object Detection</h1>
+            <div class="status-panel">
+                <div style="opacity:0.85;color:#99aabb;font-size:0.95em">YOLOv8 Demo</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="container">
+        <div class="main-content">
+
+            <!-- ===== ROW 1: TOP - Input (left) + Traffic Lights (right) ===== -->
+            <div class="top-row">
+
+                <!-- LEFT: File Input & Parameters -->
+                <div class="input-section">
+                    <section class="control-panel">
+                        <form id="yoloForm" class="form-group">
+
+                            <div class="form-section">
+                                <label class="form-label">📁 Chọn Ảnh</label>
+                                <input type="file" name="image" id="imageInput"
+                                       class="file-input" accept="image/*" required>
+                                <div class="file-name" id="fileName">Chưa chọn file</div>
+                            </div>
+
+                            <div class="form-section">
+                                <label class="form-label">
+                                    🎯 Confidence: <span class="value" id="confVal">0.5</span>
+                                </label>
+                                <input type="range" name="conf" min="0" max="1" step="0.01"
+                                       value="0.5" id="confSlider" class="slider">
+                            </div>
+
+                            <div class="form-section">
+                                <label class="form-label">
+                                    🔗 IOU: <span class="value" id="iouVal">0.5</span>
+                                </label>
+                                <input type="range" name="iou" min="0" max="1" step="0.01"
+                                       value="0.5" id="iouSlider" class="slider">
+                            </div>
+
+                            <button type="submit" class="btn-primary">🚀 Detect</button>
+                        </form>
+                    </section>
+                </div>
+
+                <!-- RIGHT: Traffic Lights -->
+                <div class="lights-section">
+                    <div class="traffic-light-panel">
+                        <div class="traffic-light-item active" id="statusGreen">
+                            <div class="light green"></div>
+                            <div class="light-info">
+                                <span class="light-label">Xanh</span>
+                                <div class="light-time" id="greenTime">0s</div>
+                            </div>
+                        </div>
+                        <div class="traffic-light-item active" id="statusYellow">
+                            <div class="light yellow"></div>
+                            <div class="light-info">
+                                <span class="light-label">Vàng</span>
+                                <div class="light-time" id="yellowTime">3s</div>
+                            </div>
+                        </div>
+                        <div class="traffic-light-item active" id="statusRed">
+                            <div class="light red"></div>
+                            <div class="light-info">
+                                <span class="light-label">Đỏ</span>
+                                <div class="light-time" id="redTime">0s</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ===== ROW 2: MIDDLE - Images (full width) ===== -->
+            <div class="middle-row">
+                <div class="image-box">
+                    <div class="image-header">
+                        <h2>📸 Ảnh Gốc</h2>
+                        <span class="badge">Input</span>
+                    </div>
+                    <div class="image-wrapper">
+                        <img id="originalImg" src="" alt="Original Image" class="result-image">
+                    </div>
+                </div>
+
+                <div class="image-box">
+                    <div class="image-header">
+                        <h2>✨ Ảnh Sau Xử Lý</h2>
+                        <span class="badge success">Output</span>
+                    </div>
+                    <div class="image-wrapper">
+                        <img id="processedImg" src="" alt="Processed Image" class="result-image">
+                    </div>
+                    <a id="downloadBtn" href="#" download class="btn-secondary">⬇️ Download Kết Quả</a>
+                </div>
+            </div>
+
+            <!-- ===== ROW 3: BOTTOM - Config (left) + Counts (right) ===== -->
+            <div class="bottom-row">
+
+                <!-- LEFT: Per-class seconds config -->
+                <div class="config-section">
+                    <h3 class="section-title">Cấu hình đèn đỏ (s/xe)</h3>
+                    <div class="persec-grid">
+                        {% set names = class_names if class_names else ['car','threewheel','bus','truck','motorbike','van'] %}
+                        {% set defaults = [5,4,10,8,5,3] %}
+                        {% for i in range(6) %}
+                        <label class="persec-item">
+                            <span class="persec-label">{{ names[i] if i < names|length else ('Class ' ~ (i+1)) }}</span>
+                            <input type="number" min="0" step="1" value="{{ defaults[i] if i < defaults|length else 5 }}" id="persec-{{ i }}" class="persec-input">
+                        </label>
+                        {% endfor %}
+                    </div>
+                    <div class="persec-note">Ghi chú: vàng cố định <strong>3s</strong>. Đỏ = tổng(s/xe * số xe).</div>
+                </div>
+
+                <!-- RIGHT: Count boxes -->
+                <div class="counts-section">
+                    <h3 class="section-title">Đếm xe theo lớp</h3>
+                    <div class="counts-grid" id="countsGrid">
+                        {% set names = class_names if class_names else ['car','threewheel','bus','truck','motorbike','van'] %}
+                        {% for i in range(6) %}
+                        <div class="count-box">
+                            <div class="count-value" id="count-{{ i }}">0</div>
+                            <div class="count-label">
+                                {{ names[i] if i < names|length else ('Class ' ~ (i+1)) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Loading & Error -->
+            <div id="loading" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>⏳ Đang xử lý ảnh...</p>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>YOLOv8 Detection Engine • Powered by Ultralytics</p>
+    </footer>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
