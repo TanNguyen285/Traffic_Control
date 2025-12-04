@@ -1,27 +1,24 @@
-import cv2
+#!/bin/bash
+#dòng đầu là buộc phải có để chỉ định trình thông dịch bash
 
-# Mở camera (0 là camera mặc định)
-cap = cv2.VideoCapture(0)
+# Tạo môi trường ảo và cài đặt các phụ thuộc (chỉ cần chạy lần đầu)
+# python3 -m venv /path/to/your/name_sh
+# source /path/to/your/name_sh/bin/activate
+# --- ĐƯỜNG DẪN CẦN CHỈNH SỬA ---
+# Thay đường dẫn bên dưới bằng venv thực tế của bạn
+VENV_PATH="/path/to/your/name_sh/bin/activate"
+APP_PATH="/path/to/your/app/app.py" 
 
-if not cap.isOpened():
-    print("Không thể mở camera")
-    exit()
 
-while True:
-    # Đọc khung hình từ camera
-    ret, frame = cap.read()
-    
-    if not ret:
-        print("Không thể nhận khung hình")
-        break
+# Kích hoạt môi trường ảo
+source "$VENV_PATH"
 
-    # Hiển thị khung hình
-    cv2.imshow('Camera Test', frame)
 
-    # Nhấn 'q' để thoát
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+# Thiết lập biến môi trường của Flask
+export FLASK_APP="$APP_PATH"
+export FLASK_ENV=production
+export PYTHONUNBUFFERED=1
 
-# Giải phóng camera và đóng cửa sổ
-cap.release()
-cv2.destroyAllWindows()
+
+# Chạy Flask server
+flask run --host=0.0.0.0 --port=5000

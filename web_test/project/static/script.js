@@ -1,7 +1,3 @@
-// ==========================================
-// GHI CHÚ - FRONTEND
-// File này điều khiển hành vi client-side (JS)
-// ==========================================
 
 // ==========================================
 // DOM Elements
@@ -27,7 +23,7 @@ const errorMessage = document.getElementById("errorMessage");
 const timeDisplay = document.getElementById("timeDisplay");
 
 // ==========================================
-// HELPERS - Timer & UI
+// UI Utility Functions_bộ chuyển thòii gian & trạng thái
 // ==========================================
 let timerInterval = null;
 let startTime = null;
@@ -71,7 +67,7 @@ function noCache(url) {
     return url + "?t=" + Date.now();
 }
 // ==========================================
-// Form Data Builder
+// 1_Tạo FormData để upload
 // ==========================================
 function createUploadForm(key, value, filename = null) {
     const fd = new FormData();
@@ -86,7 +82,7 @@ function createUploadForm(key, value, filename = null) {
 }
 
 // ==========================================
-// Response Handler
+// Mật độ xe và Cập nhật thòi gian đèn xanh đỏ vàng
 // ==========================================
 function updateDensity(count) {
     const total = document.getElementById("totalVehicles");
@@ -119,7 +115,7 @@ function showProcessedImage(url) {
 }
 
 function handleUploadResponse(data) {
-    // Update counts for each class
+    // Cập nhật số lượng cho mỗi lớp
     let total = 0;
     if (Array.isArray(data.counts)) {
         data.counts.forEach((c, i) => {
@@ -132,12 +128,12 @@ function handleUploadResponse(data) {
     }
     updateDensity(total);
 
-    // Update download link
+    // Link for download ảnh đã xử lý
     if (data.processed_image_url && downloadBtn) {
         downloadBtn.href = data.processed_image_url;
     }
 
-    // Update traffic light times
+    // Thời gian đèn giao thông
     if (typeof data.red_seconds === "number") {
         const r = Number(data.red_seconds);
         const y = Number(data.yellow_seconds || 3);
@@ -146,7 +142,7 @@ function handleUploadResponse(data) {
     }
 }
 // ==========================================
-// Upload API - Centralized handler
+// 2_Upload API _  Xử lý Phản hồi_API của ảnh đã tải lên ( lấy từ formData trên)
 // ==========================================
 async function sendToUpload(formData) {
     uiStart();
@@ -171,7 +167,7 @@ async function sendToUpload(formData) {
 }
 
 // ==========================================
-// Camera Module
+// Camera Module_ Capture & Stream
 // ==========================================
 function startCamera() {
     if (cameraPreview) {
@@ -215,7 +211,7 @@ if (cameraCaptureBtn) {
     cameraCaptureBtn.addEventListener("click", captureFrameAndSend);
 }
 
-// File input preview
+// Hiển thị tên file khi chọn ảnh
 if (imageInput) {
     imageInput.addEventListener("change", () => {
         const f = imageInput.files[0];
@@ -235,7 +231,7 @@ if (imageInput) {
     });
 }
 
-// Sliders
+// Điều khiển thanh trượt ( cấu hình Confidence & IOU )
 if (confSlider) {
     confSlider.addEventListener("input", (e) => {
         if (confVal) confVal.textContent = e.target.value;
@@ -248,7 +244,7 @@ if (iouSlider) {
     });
 }
 
-// Form submit
+// Chon ảnh và gửi form
 if (form) {
     form.addEventListener("submit", async (e) => {
         e.preventDefault();
