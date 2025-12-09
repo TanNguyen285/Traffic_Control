@@ -15,13 +15,13 @@ except ImportError:
     serial = None
 
 # -------------------------------------------------------------------------
-# LẤY ĐƯỜNG DẪN THƯ MỤC HIỆN TẠI (BASE DIRECTORY)
+# CẤU HÌNH FLASK APP VÀ THƯ MỤC
 # -------------------------------------------------------------------------
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = os.path.join(BASE_DIR, "static")
 TEMPLATE_DIR = os.path.join(BASE_DIR, "templates")
 
-# Khởi tạo Flask, chỉ định thư mục chứa template và static
+#khởi tạo Flask app
 app = Flask(__name__, static_folder=STATIC_DIR, template_folder=TEMPLATE_DIR)
 
 # Thư mục chứa ảnh upload và ảnh output
@@ -36,11 +36,9 @@ os.makedirs(OUTPUT_FOLDER, exist_ok=True)
 
 # Lấy đường dẫn tuyệt đối của model YOLO
 model_path = os.path.join(BASE_DIR, "../../runs/detect/my_yolov8n_train_meme/weights/best.pt")
-
 # Nếu đường dẫn tuyệt đối không tồn tại → dùng đường dẫn tương đối
 if not os.path.exists(model_path):
     model_path = "runs/detect/my_yolov8n_train_meme/weights/best.pt"
-
 # Load model YOLO vào RAM (mất thời gian 1 lần duy nhất)
 model = YOLO(model_path)
 
@@ -62,18 +60,12 @@ def index():
     # Trả về giao diện chính + gửi danh sách tên lớp về frontend
     return render_template("index.html", class_names=CLASS_NAMES)
 
-# -------------------------------------------------------------------------
-# LỚP CAMERA HANDLER — ĐỌC CAMERA Ở LUỒNG NỀN
-# -------------------------------------------------------------------------
-# Mục đích:
-# - Đọc camera liên tục mà không bị lag
-# - Lưu frame cuối cùng để các API khác lấy dùng
-# - Hỗ trợ reconnect khi camera bị lỗi
-# -------------------------------------------------------------------------
 class CameraHandler:
+    # ===== __init__ =====
+    # Khởi tạo camera handler: thiết lập source, khoảng time reconnect, ngưỡng frame lỗi
     def __init__(self, src=0, reconnect_interval=2.0, max_missed=20):
         self.src = src
-        self.reconnect_interval = reconnect_interval  # thời gian thử kết nối lại camera
+        self.reconnect_interval = reconnect_interval  # khoảng time reconnect (giây)
         self.max_missed = max_missed  # số frame lỗi tối đa trước khi reset camera
         self.cap = None          # đối tượng VideoCapture
         self.frame = None        # frame mới nhất
@@ -81,6 +73,8 @@ class CameraHandler:
         self.thread = None
         self.running = False
         self._missed = 0         # đếm số frame lỗi liên tiếp
+    # ===== _open =====
+    # Mở kết nối camera: nếu đang mở thì release rồi mở lại
     def _open(self):
         """ Mở kết nối camera. Nếu đang mở thì release rồi mở lại. """
         try:
@@ -101,14 +95,18 @@ class CameraHandler:
                 pass
         except Exception:
             self.cap = None
+    # ===== start =====
+    # Bắt đầu đọc camera trong thread nền riêng
     def start(self):
-        """ Bắt đầu đọc camera trong thread riêng """
+        """ Báº¯t Ä'áº§u Ä'á»c camera trong thread riÃªng """
         if self.running:
             return
         self.running = True
         self._open()  # mở camera lần đầu
         self.thread = threading.Thread(target=self._reader, daemon=True)
         self.thread.start()
+    # ===== _reader =====
+    # Luồng nền: đọc camera theo vòng lặp liên tục, lưu frame mới nhất, xử lý reconnect
     def _reader(self):
         """ Luồng nền: đọc camera theo vòng lặp liên tục """
         while self.running:
@@ -138,6 +136,8 @@ class CameraHandler:
             self._missed = 0
             time.sleep(0.01)
 
+    # ===== read =====
+    # Lấy frame mới nhất từ camera handler
     def read(self):
         """ Lấy frame mới nhất """
         with self.lock:
@@ -145,10 +145,14 @@ class CameraHandler:
                 return False, None
             return True, self.frame.copy()
 
+    # ===== is_opened =====
+    # Kiểm tra camera có mở được hay không
     def is_opened(self):
         """ Kiểm tra camera có mở được hay không """
         return self.cap is not None and self.cap.isOpened()
 
+    # ===== stop =====
+    # Tắt thread đọc camera khi app dừng
     def stop(self):
         """ Tắt thread đọc camera khi app dừng """
         self.running = False
@@ -171,7 +175,9 @@ atexit.register(lambda: camera_handler.stop())
 # UART HANDLER - Giao tiếp với ESP32
 # -------------------------------------------------------------------------
 class UARTHandler:
-    def __init__(self, port="/dev/ttyAMA1", baudrate=115200, timeout=1):
+    # ===== __init__ =====
+    # Khởi tạo UART handler: thiết lập port, baudrate, timeout, kết nối
+    def __init__(self, port="/dev/ttyAMA0", baudrate=115200, timeout=1):
         self.port = port
         self.baudrate = baudrate
         self.timeout = timeout
@@ -181,6 +187,8 @@ class UARTHandler:
         self.thread = None
         self._connect()
     
+    # ===== _connect =====
+    # Kết nối UART với serial port (nếu pyserial có sẵn)
     def _connect(self):
         try:
             if serial is None:
@@ -192,8 +200,10 @@ class UARTHandler:
             print(f"UART connection failed: {e}")
             self.uart = None
     
+    # ===== send =====
+    # Gửi cmd/message đến ESP32 qua UART
     def send(self, msg):
-        """Gửi cmd đến ESP32"""
+        """Gá»­i cmd Ä'áº¿n ESP32"""
         if self.uart is None:
             return False
         try:
@@ -205,8 +215,10 @@ class UARTHandler:
             print(f"UART send error: {e}")
             return False
     
+    # ===== start_listening =====
+    # Bắt đầu thread lắng nghe UART từ ESP32
     def start_listening(self):
-        """Bắt đầu thread lắng nghe UART"""
+        """Báº¯t Ä'áº§u thread láº¯ng nghe UART"""
         if self.running:
             return
         self.running = True
@@ -214,8 +226,10 @@ class UARTHandler:
         self.thread.start()
         print("UART listener started")
     
+    # ===== _listen =====
+    # Thread nền: lắng nghe UART từ ESP32, trigger xử lý khi nhận 'yell'
     def _listen(self):
-        """Thread nền: lắng nghe UART từ ESP32"""
+        """Thread ná»n: láº¯ng nghe UART tá»« ESP32"""
         while self.running:
             if self.uart is None or not self.uart.is_open:
                 time.sleep(0.5)
@@ -231,10 +245,12 @@ class UARTHandler:
                 print(f"UART read error: {e}")
                 time.sleep(0.1)
     
+    # ===== _handle_yell =====
+    # Xử lý khi nhận 'yell' từ ESP32: chụp ảnh, detect, lưu, gửi lại m1..m4
     def _handle_yell(self):
-        """Xử lý khi nhận 'yell' từ ESP32"""
+        """Xá»­ lÃ½ khi nháº­n 'yell' tá»« ESP32"""
         try:
-            # Chụp ảnh + detect
+            # Chá»¥p áº£nh + detect
             if not camera_handler.is_opened():
                 print("Camera not available")
                 return
@@ -281,7 +297,40 @@ class UARTHandler:
                 cmd = "m4"
             else:
                 cmd = "m0"
-            
+            # Lưu ảnh gốc và ảnh đã detect để frontend có thể hiển thị
+            try:
+                timestamp = str(uuid.uuid4())[:8]
+                filename = f"camera_{timestamp}.jpg"
+                save_path = os.path.join(UPLOAD_FOLDER, filename)
+                cv2.imwrite(save_path, frame)
+
+                # tạo ảnh output từ kết quả
+                img_out = results[0].plot()
+                name_only = os.path.splitext(filename)[0]
+                ext = os.path.splitext(filename)[1]
+                output_filename = f"{name_only}_detect{ext}"
+                output_path = os.path.join(OUTPUT_FOLDER, output_filename)
+                cv2.imwrite(output_path, img_out)
+
+                # Tạo result dict và lưu last_detection.json
+                processed_url = f"/static/outputs/{output_filename}"
+                input_url = f"/static/uploads/{filename}"
+                result = {
+                    "processed_image_url": processed_url,
+                    "input_image_url": input_url,
+                    "counts": counts,
+                    "total_vehicles": total_vehicles,
+                    "timestamp": int(time.time())
+                }
+                try:
+                    last_path = os.path.join(STATIC_DIR, 'last_detection.json')
+                    with open(last_path, 'w', encoding='utf-8') as jf:
+                        json.dump(result, jf, ensure_ascii=False)
+                except Exception as e:
+                    print(f"[DETECT] Không thể lưu last_detection.json (UART): {e}")
+            except Exception as e:
+                print(f"[DETECT] Không thể lưu ảnh khi xử lý yell: {e}")
+
             # Gửi cmd lại ESP32
             self.send(cmd)
             print(f"Detected {total_vehicles} vehicles, sent {cmd}")
@@ -289,8 +338,10 @@ class UARTHandler:
         except Exception as e:
             print(f"Error handling yell: {e}")
     
+    # ===== stop =====
+    # Tắt UART: dừng thread lắng nghe, đóng serial port
     def stop(self):
-        """Tắt UART"""
+        """Táº¯t UART"""
         self.running = False
         if self.thread:
             self.thread.join(timeout=1)
@@ -323,7 +374,7 @@ def gen_camera_frames():
             time.sleep(0.05)
             continue
 
-        # encode khung thành JPG
+        # encode khung thÃ nh JPG
         ret2, jpeg = cv2.imencode('.jpg', frame)
         if not ret2:
             continue
@@ -336,8 +387,6 @@ def gen_camera_frames():
 def camera_stream():
     """
     API hiển thị camera live stream.
-    Dùng trong HTML bằng:
-        <img src="/camera_stream">
     """
     return Response(gen_camera_frames(),
                     mimetype='multipart/x-mixed-replace; boundary=frame')
@@ -348,10 +397,8 @@ def camera_stream():
 @app.route('/camera_capture', methods=['POST'])
 def camera_capture():
     """
-  t chụp ảnh → lấy frame hiện tại → chạy YOLO → lưu ảnh → trả JSON:
-        - URL ảnh detect
-        - counts từng class
-        - tính thời gian đèn giao thông
+   chụp ảnh → lấy frame hiện tại → chạy YOLO → lưu ảnh → trả JSON:
+    
     """
     # Kiểm tra camera ok
     if not camera_handler.is_opened():
@@ -376,7 +423,7 @@ def camera_capture():
         iou = float(request.args.get('iou', 0.5))
     except Exception:
         iou = 0.5
-    # đọc lại ảnh
+    # Ä‘á»c láº¡i áº£nh
     img = cv2.imread(save_path)
     if img is None:
         return jsonify({"error": "Không thể đọc ảnh capture"}), 500
@@ -395,7 +442,7 @@ def camera_capture():
     counts = [0] * num_classes
     try:
         boxes = results[0].boxes
-        if hasattr(boxes, 'cls'):                     # YOLO trả về danh sách cls
+        if hasattr(boxes, 'cls'):  # YOLO trả về danh sách cls
             cls_vals = boxes.cls
             try:
                 cls_arr = np.array(cls_vals).astype(int).flatten()
@@ -429,21 +476,32 @@ def camera_capture():
     yellow_seconds = 3
     red_seconds = int(total_seconds)
     green_seconds = max(0, red_seconds - yellow_seconds)
-    # tạo URL ảnh
-    processed_url = url_for('static', filename=f"outputs/{output_filename}", _external=True)
-    input_url = url_for('static', filename=f"uploads/{filename}", _external=True)
-    return jsonify({
+    # tạo URL ảnh để trả về frontend
+    processed_url = f"/static/outputs/{output_filename}"
+    input_url = f"/static/uploads/{filename}"
+
+    result = {
         "processed_image_url": processed_url,
         "input_image_url": input_url,
         "counts": counts,
+        "total_vehicles": total_vehicles,
         "total_seconds": total_seconds,
+        "green_seconds": green_seconds,
         "status": "ready",
-        "red_seconds": red_seconds,
-        "yellow_seconds": yellow_seconds,
-        "green_seconds": green_seconds
-    })
+        "timestamp": int(time.time())
+    }
+
+    # Lưu một bản sao của lần phát hiện cuối cùng vào thư mục static để frontend (trình duyệt) có thể lấy nó
+    try:
+        last_path = os.path.join(STATIC_DIR, 'last_detection.json')
+        with open(last_path, 'w', encoding='utf-8') as jf:
+            json.dump(result, jf, ensure_ascii=False)
+    except Exception as e:
+        print(f"[DETECT] Không thể lưu last_detection.json: {e}")
+
+    return jsonify(result)
 # -------------------------------------------------------------------------
-# CHẠY SERVER FLASK
+# CHáº Y SERVER FLASK
 # -------------------------------------------------------------------------
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=False)

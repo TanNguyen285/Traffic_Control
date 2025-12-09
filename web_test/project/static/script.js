@@ -187,6 +187,8 @@ function startCamera() {
 window.addEventListener("DOMContentLoaded", () => {
     // Chỉ hiển thị camera – KHÔNG tự detect
     startCamera();
+    // Bắt đầu polling file last_detection.json để cập nhật ảnh khi có detect từ UART
+    startLastDetectionPolling();
 });
 
 // ==============================================
@@ -232,3 +234,38 @@ form.addEventListener("submit", async (e) => {
     e.preventDefault();
     await captureFrameAndSend();
 });
+
+// ==========================
+// Polling last_detection.json
+// ==========================
+let lastDetectionTimestamp = 0;
+let lastPollInterval = null;
+
+async function pollLastDetection() {
+    try {
+        const res = await fetch(noCache('/static/last_detection.json'));
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!data || !data.timestamp) return;
+        if (data.timestamp > lastDetectionTimestamp) {
+            lastDetectionTimestamp = data.timestamp;
+            // Update UI using existing handler
+            handleCaptureResponse(data);
+        }
+    } catch (e) {
+        // ignore fetch errors (file may not exist yet)
+    }
+}
+
+function startLastDetectionPolling(intervalMs = 2000) {
+    if (lastPollInterval) return;
+    // poll immediately, then set interval
+    pollLastDetection();
+    lastPollInterval = setInterval(pollLastDetection, intervalMs);
+}
+
+function stopLastDetectionPolling() {
+    if (!lastPollInterval) return;
+    clearInterval(lastPollInterval);
+    lastPollInterval = null;
+}
