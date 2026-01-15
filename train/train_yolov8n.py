@@ -12,10 +12,10 @@ model = YOLO("my_yolov8n.yaml").load("yolov8n.pt")
 model.train(
     task="detect",                     # Task: detect objects
     data="vehicle dataset/data.yaml",  # Đường dẫn file data.yaml
-    epochs=2,                          # Số epoch 
+    epochs=50,                          # Số epoch 
     batch=16,                          # Batch size
     imgsz=640,                         # Image size
-    device="cpu",                       # CPU hoặc "0" cho GPU
+    device="0",                       # CPU hoặc "0" cho GPU
     save=True,                          # Lưu weight
     name="my_yolov8n_train_meme",            # Tên folder lưu kết quả
     exist_ok=True                       # Nếu folder tồn tại thì ghi đè
