@@ -3,3 +3,7 @@ ultralytics
 opencv-python
 numpy
 pyserial
+torch
+torchvision
+Pillow
+psutil
