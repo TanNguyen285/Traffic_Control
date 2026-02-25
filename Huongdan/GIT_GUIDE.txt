@@ -1,0 +1,23 @@
+#( clone project)
+git clone https://github.com/TanNguyen285/Traffic_Control.git
+cd Traffic_Control
+
+#tạo version 
+ git checkout main
+git pull origin main
+git tag -a v1.0 -m "Stable YOLOv8 release"
+git push origin v1.0
+
+#tạo nhánh mới 
+git checkout main
+git checkout -b yolo26_rasp
+git push origin yolo26_rasp
+ 
+#xóa hết code cũ để copy paste mới vào
+git rm -r *
+git commit -m "Remove old codebase"
+
+#UPLOAD LÊN
+git add .
+git commit -m "Add YOLOv26 Raspberry Pi version"
+git push origin yolo26_rasp
