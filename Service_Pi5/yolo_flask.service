@@ -1,0 +1,14 @@
+[Unit]
+Description=Flask Application Service
+After=network.target
+
+[Service]
+User=pi
+Group=pi
+WorkingDirectory=/home/pi/flask_app
+ExecStart=/bin/bash /home/pi/flask_app/run.sh
+Restart=always
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
