@@ -16,7 +16,7 @@ class Tienxulyanh:
             self.scale_factor = 12 # Zero-DCE++ yêu cầu kích thước chia hết cho số này
             self.dce_net = model.enhance_net_nopool(self.scale_factor).to(self.device)
             try:
-                model_path = 'Zero-DCE++/snapshots_Zero_DCE++/Epoch99.pth'
+                model_path = 'Zero-DCE++/Epoch99.pth'
                 if os.path.exists(model_path):
                     self.dce_net.load_state_dict(torch.load(model_path, map_location=self.device, weights_only=True))
                     self.dce_net.eval()
