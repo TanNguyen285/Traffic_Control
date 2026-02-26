@@ -8,7 +8,7 @@ git pull origin main
 git tag -a v1.0 -m "Stable YOLOv8 release"
 git push origin v1.0
 
-#tạo nhánh mới 
+#tạo nhánh mới (branch) để phát triển code mới
 git checkout main
 git checkout -b yolo26_rasp
 git push origin yolo26_rasp
@@ -21,3 +21,11 @@ git commit -m "Remove old codebase"
 git add .
 git commit -m "Add YOLOv26 Raspberry Pi version"
 git push origin yolo26_rasp
+
+# merge code mới vào main
+git checkout main
+git merge yolo26_rasp
+git push origin main
+
+#xóa nhánh sau khi merge
+git branch -d yolo26_rasp

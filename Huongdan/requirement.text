@@ -5,5 +5,3 @@ numpy
 pyserial
 torch
 torchvision
-Pillow
-psutil
