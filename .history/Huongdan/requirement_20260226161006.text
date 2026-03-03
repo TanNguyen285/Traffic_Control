@@ -2,6 +2,6 @@ flask
 ultralytics
 opencv-python
 numpy
+pyserial
 torch
 torchvision
-pillow

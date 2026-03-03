@@ -9,9 +9,8 @@ B3: kích hoạt môi trường ảo
 # source yolo/bin/activate
 
 B4: cài đặt các thư viện cần thiết
-# pip install -r Huongdan/requirement.txt
+# pip install -r Traffic_Control-main/Huongdan/requirements.txt
 
-sau bước này cứ test hệ thống oke thì ms qua làm serveic
 B5: chỉnh file yolo_flask.sh
 # chỉnh sửa file yolo_flask.sh, thay đường dẫn môi trường ảo và app.py cho đúng
 

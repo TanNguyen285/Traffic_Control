@@ -29,11 +29,3 @@ git push origin main
 
 #xóa nhánh sau khi merge
 git branch -d yolo26_rasp
-
-========================Pi5========================
-sudo systemctl stop flask_app.service
-sudo systemctl disable flask_app.service
-sudo rm /etc/systemd/system/flask_app.service
-sudo systemctl daemon-reload
-sudo systemctl reset-failed
-ls /etc/systemd/system/
