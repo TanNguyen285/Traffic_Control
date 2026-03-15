@@ -17,13 +17,12 @@ from pre_processor_image import Tienxulyanh
 # ==========================================================
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 #MODEL_PATH = "runs/detect/yolov26_trained/weights/best.pt"
-MODEL_PATH = "runs/detect/yolov26_epoch50/weights/best_ncnn_model" # Thay đổi ở đây
+MODEL_PATH = "../../runs/detect/yolov26_epoch50/weights/best_ncnn_model" # Thay đổi ở đây
 STATIC_DIR = os.path.join(APP_DIR, "static")
 UPLOAD_DIR = os.path.join(STATIC_DIR, "uploads")
 OUTPUT_DIR = os.path.join(STATIC_DIR, "outputs")
 
 os.makedirs(UPLOAD_DIR, exist_ok=True)
-os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # ==========================================================
 # 3. INIT

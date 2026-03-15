@@ -18,7 +18,8 @@ class Yolo_AI:
 
         try:
             # ================= 1️⃣ Chạy YOLO =================
-            results = self.model(processed_frame, conf=0.3)
+            #chuẩn cho ncnn ( nếu train 640x640 thì phải resize về 640x640)
+            results = self.model.predict(processed_frame, conf=0.3,image_size=640)
 
             if not results or len(results) == 0:
                 return {"error": "No detection results"}, 0
