@@ -18,7 +18,7 @@ class Yolo_AI:
 
         try:
             # ================= 1️⃣ Chạy YOLO =================
-            results = self.model(processed_frame, conf=0.5)
+            results = self.model(processed_frame, conf=0.3)
 
             if not results or len(results) == 0:
                 return {"error": "No detection results"}, 0

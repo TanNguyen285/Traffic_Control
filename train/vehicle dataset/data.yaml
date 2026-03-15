@@ -1,9 +1,0 @@
-
-#========YOLOV8========#
-# 🚗 VEHICLE DATASET YAML
-train: C:/Users/DELL/Documents/PlatformIO/.vscode/YoloV8/vehicle dataset/train/images
-val:   C:/Users/DELL/Documents/PlatformIO/.vscode/YoloV8/vehicle dataset/valid/images
-
-nc: 6
-names: ['car', 'threewheel', 'bus', 'truck', 'motorbike', 'van']
-# class names

@@ -12,8 +12,8 @@ class Tienxulyanh:
         self.target_size = target_size
         self.use_sci = use_sci
         self.brightness = 0.0
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-
+        #self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cpu')  # Chỉ dùng CPU để tránh lỗi CUDA
         self.transform = transforms.ToTensor()
 
         if self.use_sci:

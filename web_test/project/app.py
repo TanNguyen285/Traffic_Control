@@ -17,7 +17,7 @@ from pre_processor_image import Tienxulyanh
 # ==========================================================
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 #MODEL_PATH = "runs/detect/yolov26_trained/weights/best.pt"
-MODEL_PATH = "runs/detect/yolov26_trained/weights/best_ncnn_model" # Thay đổi ở đây
+MODEL_PATH = "runs/detect/yolov26_epoch50/weights/best_ncnn_model" # Thay đổi ở đây
 STATIC_DIR = os.path.join(APP_DIR, "static")
 UPLOAD_DIR = os.path.join(STATIC_DIR, "uploads")
 OUTPUT_DIR = os.path.join(STATIC_DIR, "outputs")
@@ -40,7 +40,7 @@ except Exception as e:
 
 cam = Camera(src=0)
 pre_proc = Tienxulyanh(target_size=(640, 640))
-ai = Yolo_AI(model, class_names=['bus', 'car', 'motorbike', 'truck'])
+ai = Yolo_AI(model, class_names=['car', 'van', 'bus', 'motorcycle', 'truck'])
 
 uart_port = "/dev/ttyAMA0" if platform.system() == "Linux" else "COM3"
 uart = UARTService(port=uart_port)
@@ -138,7 +138,7 @@ def perform_detection():
 @app.route("/")
 def index():
     # pass class names to template so counts boxes match app logic
-    return render_template("index.html", class_names=['bus', 'car', 'motorbike', 'truck'])
+    return render_template("index.html", class_names=['car', 'van', 'bus', 'motorcycle', 'truck'])
 
 @app.route('/camera_stream')
 def camera_stream():
