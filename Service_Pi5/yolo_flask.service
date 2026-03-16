@@ -1,13 +1,20 @@
+
 [Unit]
-Description=Flask Application Service
+Description=Traffic Control Flask Service
 After=network.target
 
 [Service]
-User=pi
-Group=pi
-WorkingDirectory=/home/pi/flask_app
-ExecStart=/bin/bash /home/pi/flask_app/run.sh
+Type=simple
+User=lagct
+Group=lagct
+
+WorkingDirectory=/home/lagct/Desktop/Traffic_Control/web_test/project
+
+ExecStart=/bin/bash /home/lagct/Desktop/Traffic_Control/web_test/project/run.sh
+
 Restart=always
+RestartSec=5
+
 Environment=PYTHONUNBUFFERED=1
 
 [Install]
