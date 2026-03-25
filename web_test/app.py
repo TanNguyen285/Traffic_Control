@@ -3,14 +3,6 @@ import sys
 
 # --- XỬ LÝ ĐƯỜNG DẪN (QUAN TRỌNG) ---
 # Lấy đường dẫn thư mục hiện tại (web_test)
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# Lấy đường dẫn thư mục SCI
-SCI_DIR = os.path.join(CURRENT_DIR, "SCI")
-
-# Thêm cả 2 vào hệ thống để các file con tự tìm thấy nhau
-sys.path.append(CURRENT_DIR)
-sys.path.append(SCI_DIR)
-
 # --- BÂY GIỜ MỚI IMPORT CÁC MODULE KHÁC ---
 from flask import Flask, render_template, jsonify, Response, request
 import torch

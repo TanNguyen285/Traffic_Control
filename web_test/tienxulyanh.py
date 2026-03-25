@@ -4,7 +4,7 @@ import torch
 import os
 from PIL import Image
 import torchvision.transforms as transforms
-from SCI.model_sci import Finetunemodel
+from model_sci import Finetunemodel
 
 class Tienxulyanh:
     def __init__(self, target_size=(640, 640), use_sci=True):
@@ -16,7 +16,7 @@ class Tienxulyanh:
 
         if self.use_sci:
             try:
-                model_path = "SCIweights/medium.pt"
+                model_path = "weights/medium.pt"
                 if os.path.exists(model_path):
                     self.sci_net = Finetunemodel(model_path).to(self.device).eval()
                     print(f"✅ Loaded SCI model trên {self.device}")
