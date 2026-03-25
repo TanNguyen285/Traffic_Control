@@ -1,0 +1,4 @@
+python310.zip
+.
+..\venv_data
+import site

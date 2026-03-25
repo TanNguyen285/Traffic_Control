@@ -1,7 +1,0 @@
-flask
-ultralytics
-opencv-python
-numpy
-torch
-torchvision
-pillow

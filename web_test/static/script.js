@@ -1,276 +1,255 @@
-// =======================
-//   FRONTEND MAIN SCRIPT 
-//   (ĐÃ THÊM CHÚ THÍCH TIẾNG VIỆT)
-//   KHÔNG CÒN AUTO-CYCLE
-//   CHỈ CHỤP KHI NGƯỜI DÙNG BẤM NÚT
-// =======================
-
-// ====== LẤY CÁC PHẦN TỬ HTML ======
-const form = document.getElementById("yoloForm");
-const imageInput = document.getElementById("imageInput");
-const fileNameDisplay = document.getElementById("fileName");
-
-const originalImg = document.getElementById("originalImg");
-const processedImg = document.getElementById("processedImg");
-const cameraPreview = document.getElementById("cameraPreview");
-const cameraCaptureBtn = document.getElementById("cameraCaptureBtn");
-
-const loading = document.getElementById("loading");
 const errorMessage = document.getElementById("errorMessage");
 
-const timeDisplay = document.getElementById("timeDisplay");
+const streams = [
+    {
+        id: 1,
+        endpoint: "/data_a",
+        branchLetter: "A",
+        processedImg: document.getElementById("processedImg1"),
+        totalVehicles: document.getElementById("totalVehicles1"),
+        statusGreen: document.getElementById("statusGreen1"),
+        statusYellow: document.getElementById("statusYellow1"),
+        statusRed: document.getElementById("statusRed1"),
+        greenTime: document.getElementById("greenTime1"),
+        yellowTime: document.getElementById("yellowTime1"),
+        redTime: document.getElementById("redTime1")
+    },
+    {
+        id: 2,
+        endpoint: "/data_b",
+        branchLetter: "B",
+        processedImg: document.getElementById("processedImg2"),
+        totalVehicles: document.getElementById("totalVehicles2"),
+        statusGreen: document.getElementById("statusGreen2"),
+        statusYellow: document.getElementById("statusYellow2"),
+        statusRed: document.getElementById("statusRed2"),
+        greenTime: document.getElementById("greenTime2"),
+        yellowTime: document.getElementById("yellowTime2"),
+        redTime: document.getElementById("redTime2")
+    }
+];
 
-// ==============================================
-//   BỘ ĐẾM THỜI GIAN XỬ LÝ (HIỆN 00:00:00)
-// ==============================================
-let timerInterval = null;
-let startTime = null;
+const branchTotals = { 1: 0, 2: 0 };
 
-function startTimer() {
-    startTime = Date.now();
-    if (timerInterval) clearInterval(timerInterval);
+const streamState = {
+    1: { lastTimestamp: 0, lastProcessedKey: "", inFlight: false, imageLoading: false },
+    2: { lastTimestamp: 0, lastProcessedKey: "", inFlight: false, imageLoading: false }
+};
 
-    timerInterval = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        const h = String(Math.floor(elapsed / 3600)).padStart(2, "0");
-        const m = String(Math.floor((elapsed % 3600) / 60)).padStart(2, "0");
-        const s = String(elapsed % 60).padStart(2, "0");
-        timeDisplay.textContent = `${h}:${m}:${s}`;
-    }, 200);
+let scheduledUI = false;
+const uiQueue = [];
+
+function queueUIUpdate(fn) {
+    uiQueue.push(fn);
+    if (scheduledUI) return;
+    scheduledUI = true;
+    requestAnimationFrame(() => {
+        while (uiQueue.length > 0) {
+            const cb = uiQueue.shift();
+            cb();
+        }
+        scheduledUI = false;
+    });
 }
 
-function stopTimer() {
-    if (timerInterval) clearInterval(timerInterval);
-    timeDisplay.textContent = "00:00:00";
-}
-
-// ==============================================
-//      HIỆN LOADING + KHÓA NÚT BẤM
-// ==============================================
-function uiStart() {
-    loading.style.display = "block";
-    form.querySelector(".btn-primary").disabled = true;
-    startTimer();
-}
-
-function uiEnd() {
-    loading.style.display = "none";
-    form.querySelector(".btn-primary").disabled = false;
-    stopTimer();
+function noCache(url) {
+    if (!url || url.startsWith("data:")) return url;
+    const separator = url.includes("?") ? "&" : "?";
+    return `${url}${separator}t=${Date.now()}`;
 }
 
 function showError(msg) {
+    if (!errorMessage) return;
     errorMessage.textContent = msg;
     errorMessage.style.display = msg ? "block" : "none";
 }
 
-// Tạo URL không cache
-function noCache(url) {
-    return url + "?t=" + Date.now();
-}
-
-// ==============================================
-//   CẬP NHẬT MẬT ĐỘ XE TRÊN GIAO DIỆN
-// ==============================================
-function updateDensity(count) {
-    const total = document.getElementById("totalVehicles");
-    const level = document.getElementById("densityLevel");
-
-    total.textContent = count;
-
-    if (count < 5) level.textContent = "🟢 Ít";
-    else if (count <= 10) level.textContent = "🟡 Trung bình";
-    else if (count <= 15) level.textContent = "🟠 Khá";
-    else level.textContent = "🔴 Đông";
-}
-
-// ==============================================
-//   CẬP NHẬT THỜI GIAN ĐÈN TÍN HIỆU
-// ==============================================
-function updateLightTimes(g, y, r) {
-    document.getElementById("greenTime").textContent = `${g}s`;
-    document.getElementById("yellowTime").textContent = `${y}s`;
-    document.getElementById("redTime").textContent = `${r}s`;
-}
-
-// ==============================================
-//     HIỆN ẢNH ĐÃ XỬ LÝ
-// ==============================================
-function showProcessedImage(url) {
-    processedImg.onload = () => processedImg.classList.add("active");
-    processedImg.src = url;
-}
-
-// ==============================================
-//   XỬ LÝ JSON TRẢ VỀ SAU KHI DETECT
-// ==============================================
-function handleCaptureResponse(data) {
-    // ----------- Đếm xe -----------  
-    let totalCount = 0;
-    if (Array.isArray(data.counts)) {
-        data.counts.forEach((c, i) => {
-            const el = document.getElementById(`count-${i}`);
-            if (el) el.textContent = c;
-            totalCount += c;
-        });
-    }
-    updateDensity(totalCount);
-
-    // ----------- Ảnh gốc -----------  
-    if (data.input_image) {
-        originalImg.src = data.input_image;
-        originalImg.classList.add("active");
-    }
-
-    // ----------- Ảnh detect -----------  
-    if (data.processed_image) {
-        showProcessedImage(data.processed_image);
-    }
-
-    // ----------- Thời gian đèn -----------
-    const yellow = data.yellow_seconds ?? 3;
-    const total = data.total_seconds ?? data.red_seconds ?? 0;
-    const red = total;
-    const green = data.green_seconds ?? Math.max(0, red - yellow);
-
-    updateLightTimes(green, yellow, red);
-
-    showError("");
-}
-
-// ==============================================
-//   GỌI API /camera_capture (KHI BẤM NÚT)
-// ==============================================
-async function uploadFileIfNeeded() {
-    if (imageInput && imageInput.files && imageInput.files.length > 0) {
-        const file = imageInput.files[0];
-        const fd = new FormData();
-        fd.append('file', file);
-        const upl = await fetch('/upload_image', { method: 'POST', body: fd });
-        if (!upl.ok) throw new Error('Upload failed ' + upl.status);
-        const j = await upl.json();
-        if (j.error) throw new Error(j.error);
-    }
-}
-
-async function captureFrameAndSend() {
-    uiStart();
-    showError("");
-
-    try {
-        await uploadFileIfNeeded();
-        const res = await fetch(`/camera_capture`, { method: "POST" });
-        if (!res.ok) throw new Error("Lỗi server: " + res.status);
-
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-
-        handleCaptureResponse(data);
-        // reset file input after detection
-        if (imageInput) {
-            imageInput.value = "";
-            fileNameDisplay.textContent = "Chưa chọn file";
-            fileNameDisplay.style.color = "#999";
-        }
-    }
-    catch (err) {
-        showError("Lỗi: " + err.message);
-    }
-    finally {
-        uiEnd();
-    }
-}
-
-// ==============================================
-//     HIỂN THỊ CAMERA STREAM LÊN TRANG
-// ==============================================
-function startCamera() {
-    cameraPreview.src = "/camera_stream";
-}
-
-// ==============================================
-//     SỰ KIỆN KHỞI TẠO TRANG
-// ==============================================
-window.addEventListener("DOMContentLoaded", () => {
-    // Chỉ hiển thị camera – KHÔNG tự detect
-    startCamera();
-    // Bắt đầu polling file last_detection.json để cập nhật ảnh khi có detect từ UART
-    startLastDetectionPolling();
-});
-
-// ==============================================
-//     NÚT "📸 Chụp & Detect"
-// ==============================================
-cameraCaptureBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    // ensure we are using live camera instead of any uploaded file
-    if (imageInput) {
-        imageInput.value = "";
-        fileNameDisplay.textContent = "Chưa chọn file";
-        fileNameDisplay.style.color = "#999";
-    }
-    await captureFrameAndSend();
-});
-
-// ==============================================
-//     HIỂN THỊ TÊN FILE ẢNH (KHI UPLOAD)
-// ==============================================
-if (imageInput) {
-    imageInput.addEventListener("change", () => {
-        const f = imageInput.files[0];
-        if (!f) {
-            fileNameDisplay.textContent = "Chưa chọn file";
-            fileNameDisplay.style.color = "#999";
-            return;
-        }
-        fileNameDisplay.textContent = `✓ ${f.name}`;
-        fileNameDisplay.style.color = "#44dd44";
+function setLightActive(stream, activeColor) {
+    const map = {
+        green: stream.statusGreen,
+        yellow: stream.statusYellow,
+        red: stream.statusRed
+    };
+    Object.entries(map).forEach(([color, el]) => {
+        if (!el) return;
+        if (color === activeColor) el.classList.add("active");
+        else el.classList.remove("active");
     });
 }
 
-// ==============================================
-//     CẬP NHẬT TEXT CHO SLIDER CONF & IOU
-// ==============================================
+function setDiagramPostActive(postEl, activeColor) {
+    if (!postEl) return;
+    const bulbs = postEl.querySelectorAll(".diagram-bulb");
+    bulbs.forEach((b) => {
+        const c = b.dataset.bulb;
+        if (c === activeColor) b.classList.add("is-active");
+        else b.classList.remove("is-active");
+    });
+}
 
-// ==============================================
-//     NÚT PHÂN TÍCH TRONG FORM (NẾU CÓ)
-// ==============================================
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await captureFrameAndSend();
-});
+function applyP2PTrafficAndDiagram() {
+    streams.forEach((stream) => {
+        const total = branchTotals[stream.id];
+        let color = "red";
+        if (total <= 5) color = "green";
+        else if (total <= 12) color = "yellow";
+        else color = "red";
 
-// ==========================
-// Polling last_detection.json
-// ==========================
-let lastDetectionTimestamp = 0;
-let lastPollInterval = null;
+        queueUIUpdate(() => {
+            setLightActive(stream, color);
+            const post = document.getElementById(stream.id === 1 ? "diagramPostA" : "diagramPostB");
+            setDiagramPostActive(post, color);
+        });
+    });
+}
 
-async function pollLastDetection() {
+function buildCountElementMap(streamId) {
+    const map = {};
+    const classEls = document.querySelectorAll(`#countsGrid${streamId} .count-value`);
+    classEls.forEach((el) => {
+        const cls = (el.dataset.className || "").toLowerCase().replace(/\s+/g, "_");
+        if (cls) map[cls] = el;
+    });
+    return map;
+}
+
+function normalizeCounts(data, streamId) {
+    const counts = data.counts;
+    const results = {};
+    const stream = streams.find(s => s.id === streamId);
+    const classKeys = Object.keys(stream?.countElements || {});
+
+    if (Array.isArray(counts)) {
+        counts.forEach((val, idx) => {
+            const cls = classKeys[idx] || String(idx);
+            results[cls] = Number(val) || 0;
+        });
+    } else if (typeof counts === "object") {
+        Object.keys(counts).forEach((k) => {
+            results[String(k).toLowerCase().replace(/\s+/g, "_")] = Number(counts[k]) || 0;
+        });
+    }
+    return results;
+}
+
+function updateProcessedImage(stream, data, state) {
+    const imagePath = data.processed_image;
+    if (!imagePath || !stream.processedImg || state.imageLoading) return;
+
+    // Fix lỗi: Không thêm noCache nếu là Base64
+    const nextUrl = imagePath.startsWith("data:") ? imagePath : noCache(imagePath);
+
+    state.imageLoading = true;
+    const preloaded = new Image();
+    preloaded.src = nextUrl;
+
+    preloaded.onload = () => {
+        queueUIUpdate(() => {
+            stream.processedImg.src = nextUrl;
+            stream.processedImg.classList.add("active");
+            state.imageLoading = false;
+        });
+    };
+    preloaded.onerror = () => { state.imageLoading = false; };
+}
+
+function updateStreamUI(stream, data) {
+    const normalizedCounts = normalizeCounts(data, stream.id);
+    let total = 0;
+
+    Object.keys(normalizedCounts).forEach((cls) => {
+        const value = normalizedCounts[cls];
+        total += value;
+        const countEl = stream.countElements?.[cls];
+        if (countEl) countEl.textContent = String(value);
+    });
+
+    branchTotals[stream.id] = total;
+
+    const yellow = Number(data.yellow_seconds ?? 3);
+    const red = Number(data.red_seconds ?? data.total_seconds ?? 0);
+    const green = Number(data.green_seconds ?? Math.max(0, red - yellow));
+
+    queueUIUpdate(() => {
+        if (stream.totalVehicles) stream.totalVehicles.textContent = String(total);
+        if (stream.greenTime) stream.greenTime.textContent = `${green}s`;
+        if (stream.yellowTime) stream.yellowTime.textContent = `${yellow}s`;
+        if (stream.redTime) stream.redTime.textContent = `${red}s`;
+    });
+
+    updateProcessedImage(stream, data, streamState[stream.id]);
+    applyP2PTrafficAndDiagram();
+}
+
+async function runStaticDetect() {
+    const input = document.getElementById("inputStaticImageFile") || document.getElementById("staticImageInput");
+    const branchSel = document.getElementById("selectDetectTargetBranch") || document.getElementById("staticTargetBranch");
+    const file = input?.files?.[0];
+    
+    if (!file) {
+        showError("Vui lòng chọn file ảnh trước.");
+        return;
+    }
+
+    const streamId = Number(branchSel?.value || 1);
+    const stream = streams.find((s) => s.id === streamId);
+    showError("");
+
+    const formData = new FormData();
+    formData.append("image", file);
+
     try {
-        const res = await fetch(noCache('/static/last_detection.json'));
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!data || !data.timestamp) return;
-        if (data.timestamp > lastDetectionTimestamp) {
-            lastDetectionTimestamp = data.timestamp;
-            // Update UI using existing handler
-            handleCaptureResponse(data);
+        const res = await fetch("/detect_static", { method: "POST", body: formData });
+        if (res.ok) {
+            const data = await res.json();
+            // Ép UI cập nhật dữ liệu thật từ Python trả về
+            updateStreamUI(stream, data);
+        } else {
+            throw new Error("Server báo lỗi khi xử lý ảnh.");
         }
-    } catch (e) {
-        // ignore fetch errors (file may not exist yet)
+    } catch (error) {
+        showError("Lỗi Detect: " + error.message);
     }
 }
 
-function startLastDetectionPolling(intervalMs = 2000) {
-    if (lastPollInterval) return;
-    // poll immediately, then set interval
-    pollLastDetection();
-    lastPollInterval = setInterval(pollLastDetection, intervalMs);
+function initCameraStreamSources() {
+    const camera1 = document.getElementById("cameraPreview1");
+    const camera2 = document.getElementById("cameraPreview2");
+    if (camera1) camera1.src = "/video_feed";
+    if (camera2) camera2.src = "/camera_stream_2";
 }
 
-function stopLastDetectionPolling() {
-    if (!lastPollInterval) return;
-    clearInterval(lastPollInterval);
-    lastPollInterval = null;
+function toggleIntegratedBranch(branchId) {
+    const isA = String(branchId).toUpperCase() === "A" || branchId === 1;
+    const panel = document.getElementById(isA ? "resultCollapsibleA" : "resultCollapsibleB");
+    const btn = document.getElementById(isA ? "btnToggleResultsA" : "btnToggleResultsB");
+    if (!panel || !btn) return;
+
+    const open = panel.classList.toggle("is-open");
+    btn.innerHTML = open ? '<span class="btn-toggle-icon">−</span> Thu gọn kết quả' : '<span class="btn-toggle-icon">+</span> Xem kết quả';
 }
+
+window.addEventListener("DOMContentLoaded", () => {
+    streams.forEach((s) => {
+        s.countElements = buildCountElementMap(s.id);
+    });
+
+    initCameraStreamSources();
+    applyP2PTrafficAndDiagram();
+
+    document.getElementById("btnToggleResultsA")?.addEventListener("click", () => toggleIntegratedBranch("A"));
+    document.getElementById("btnToggleResultsB")?.addEventListener("click", () => toggleIntegratedBranch("B"));
+
+    const fileInput = document.getElementById("inputStaticImageFile") || document.getElementById("staticImageInput");
+    const fileNameEl = document.getElementById("textStaticFileName") || document.getElementById("staticFileName");
+    fileInput?.addEventListener("change", () => {
+        const f = fileInput.files?.[0];
+        if (fileNameEl) fileNameEl.textContent = f ? `${f.name} (${Math.round(f.size / 1024)} KB)` : "Chưa chọn file";
+    });
+
+    const btnDetect = document.getElementById("btnDetectStaticImage") || document.getElementById("btnDetectStatic");
+    btnDetect?.addEventListener("click", runStaticDetect);
+
+    // TẠM TẮT AUTO POLL ĐỂ CHẠY UPLOAD
+    console.log("🚀 Manual Mode: Polling disabled. Ready for upload.");
+});
