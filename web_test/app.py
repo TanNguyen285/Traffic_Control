@@ -1,9 +1,16 @@
 import os
 import sys
 
-# --- XỬ LÝ ĐƯỜNG DẪN (QUAN TRỌNG) ---
-# Lấy đường dẫn thư mục hiện tại (web_test)
-# --- BÂY GIỜ MỚI IMPORT CÁC MODULE KHÁC ---
+# ==========================================================
+# 1. XỬ LÝ HỆ THỐNG & ĐƯỜNG DẪN
+# ==========================================================
+# Lấy đường dẫn tuyệt đối của thư mục chứa file app.py hiện tại
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+# Đưa các thư mục này vào danh sách tìm kiếm của Python để có thể import các file nội bộ
+sys.path.append(CURRENT_DIR)
+# ==========================================================
+# 2. IMPORT CÁC THƯ VIỆN CẦN THIẾT
+# ==========================================================
 from flask import Flask, render_template, jsonify, Response, request
 import torch
 import cv2
@@ -11,69 +18,106 @@ import numpy as np
 from ultralytics import YOLO
 from torchvision import transforms
 
-# Import các class hệ thống
-from camera import Camera
-from yoloxx import Yolo_AI
-from uart_service import UARTService
-from tienxulyanh import Tienxulyanh
-from SimpleCNN.custom import SimpleCNN
-from logic import TrafficLogic  # File logic bạn vừa tách
+# --- Import các Class chức năng ---
+from camera import Camera           # Quản lý lấy luồng hình ảnh từ Webcam
+from yolov26 import Yolo_AI          # Wrapper xử lý logic nhận diện đối tượng YOLO
+from uart_service import UARTService # Dịch vụ gửi/nhận dữ liệu qua cổng Serial (RS232/TTL)
+from tienxulyanh import Tienxulyanh  # Các hàm chuẩn hóa kích thước/màu sắc ảnh
+from SimpleCNN.custom import SimpleCNN # Cấu trúc mạng Neural phân loại kẹt xe
+from logic import TrafficLogic      # "Bộ não" điều phối toàn bộ luồng xử lý AI
+from cnn import Simple_CNN_config   # Wrapper xử lý logic dự đoán trạng thái từ CNN
 
 app = Flask(__name__)
 
 # ==========================================================
-# 2. KHỞI TẠO BIẾN (Chỉ khai báo, không viết logic chạy ở đây)
+# 3. CẤU HÌNH HỆ THỐNG (CONFIG)
 # ==========================================================
 class Config:
+    # Đường dẫn tới file model YOLO đã được tối ưu (định dạng NCNN cho CPU)
     YOLO_PATH = "runs/detect/yolov26_epoch50/weights/best_ncnn_model"
+    # Đường dẫn tới file model CNN phân loại trạng thái
     CNN_PATH = "runs/exp3/best_cnn_model.pth"
+    # Đường dẫn tới file model SCI
+    SCI_PATH = "web_test/weights/difficult.pt"
+    # Tự động chọn GPU (cuda) nếu có, nếu không dùng CPU
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Tên các nhãn phân loại của mô hình CNN
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
+    # Các loại phương tiện mà mô hình YOLO sẽ tập trung nhận diện
     YOLO_CLASSES = ['car', 'van', 'bus', 'motorcycle', 'truck']
 
-# Khởi tạo phần cứng & AI
+# ==========================================================
+# 4. KHỞI TẠO PHẦN CỨNG & MÔ HÌNH AI
+# ==========================================================
+# Khởi tạo Camera và bắt đầu luồng đọc hình ảnh ngầm
 cam = Camera(src=0)
 cam.start()
 
-uart = UARTService(port="COM3") # Hoặc ttyAMA0 tùy máy
-pre_proc = Tienxulyanh(target_size=(640, 640))
+# Cấu hình cổng UART để giao tiếp với vi điều khiển (ví dụ: điều khiển đèn giao thông)
+uart = UARTService(port="COM3") 
 
-# Load Models
+# Khởi tạo bộ tiền xử lý ảnh (Resize về 640x640 cho YOLO)
+pre_proc = Tienxulyanh(sci_path=Config.SCI_PATH, target_size=(640, 640), use_sci=True)
+
+# --- Tải mô hình YOLO ---
 yolo_model = YOLO(Config.YOLO_PATH)
 ai_yolo = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
 
+# --- Tải mô hình CNN ---
 cnn_net = SimpleCNN(num_classes=2).to(Config.DEVICE)
 cnn_net.load_state_dict(torch.load(Config.CNN_PATH, map_location=Config.DEVICE))
-cnn_net.eval()
+cnn_net.eval() # Chuyển sang chế độ dự đoán (không phải huấn luyện)
 
+# --- Cấu hình chuẩn hóa ảnh cho CNN (giống hệt lúc huấn luyện) ---
 cnn_transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
+# --- Khởi tạo Service CNN ---
+# Gom nhóm model, transform và config vào một chỗ để dễ quản lý
+cnn_service = Simple_CNN_config(
+    model=cnn_net, 
+    transform=cnn_transform, 
+    classes=Config.CNN_CLASSES, 
+    device=Config.DEVICE
+)
 
-# KHỞI TẠO ENGINE (Toàn bộ logic nằm trong này)
-engine = TrafficLogic(ai_yolo, cnn_net, cnn_transform, Config.CNN_CLASSES, Config.DEVICE, pre_proc, uart, cam)
+# --- Khởi tạo ENGINE điều phối (TrafficLogic mới) ---
+# Bây giờ engine chỉ nhận cnn_service thay vì nhận lẻ tẻ từng biến cnn_net, cnn_transform
+engine = TrafficLogic(
+    yolo_ai=ai_yolo, 
+    cnn_service=cnn_service, 
+    pre_proc=pre_proc, 
+    uart=uart, 
+    cam=cam
+)
 
+# Biến tạm lưu trữ ảnh người dùng tải lên từ giao diện web
 selected_image = None
 
 # ==========================================================
-# 3. ROUTES (Định tuyến giao diện)
+# 5. CÁC ROUTE (ĐƯỜNG DẪN WEB)
 # ==========================================================
+
 @app.route("/")
 def index():
+    """ Trang chủ: Hiển thị giao diện điều khiển """
     return render_template("index.html", class_names=Config.YOLO_CLASSES)
 
 @app.route('/camera_capture', methods=['POST'])
 def camera_capture():
+    """ API: Thực hiện nhận diện ảnh (từ camera hoặc ảnh upload) """
     global selected_image
-    # Gọi engine xử lý, app.py không cần biết bên trong làm gì
+    # Gọi engine để chạy YOLO + CNN + Gửi UART
+    # Nếu selected_image là None, engine sẽ tự lấy frame hiện tại từ Camera
     res, _ = engine.perform_detection(selected_image)
-    selected_image = None 
-    return jsonify(res)
+    selected_image = None # Reset lại ảnh sau khi xử lý xong
+    return jsonify(res) # Trả kết quả JSON về cho giao diện Web
 
 @app.route('/upload_image', methods=['POST'])
 def upload_image():
+    """ API: Nhận file ảnh từ máy tính người dùng gửi lên """
     global selected_image
     file = request.files.get('file')
     if file:
@@ -84,6 +128,7 @@ def upload_image():
 
 @app.route('/camera_stream')
 def camera_stream():
+    """ API: Tạo luồng video (MJPEG stream) để xem trực tiếp trên trình duyệt """
     def gen():
         while True:
             ret, frame = cam.read()
@@ -92,9 +137,13 @@ def camera_stream():
                 yield (b'--frame\r\n' b'Content-Type: image/jpeg\r\n\r\n' + jpeg.tobytes() + b'\r\n')
     return Response(gen(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
-# Cleanup khi tắt app
+# ==========================================================
+# 6. QUẢN LÝ ĐÓNG HỆ THỐNG
+# ==========================================================
 import atexit
+# Đảm bảo khi tắt server Flask, camera sẽ được tắt đúng cách để không bị treo port
 atexit.register(lambda: cam.stop())
 
 if __name__ == "__main__":
+    # Chạy server ở port 8000, host 0.0.0.0 để các máy trong mạng LAN có thể truy cập
     app.run(host="0.0.0.0", port=8000, debug=False)
