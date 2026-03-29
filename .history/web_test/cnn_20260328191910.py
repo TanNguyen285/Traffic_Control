@@ -20,10 +20,10 @@ class Simple_CNN_config:
         pil_img = Image.fromarray(rgb)
         
         # Tiền xử lý và đưa vào Model
-        input_tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
+        input_cnn = self.transform(pil_img).unsqueeze(0).to(self.device)
         
         with torch.no_grad():
-            outputs = self.net(input_tensor)
+            outputs = self.net(input_cnn)
             probs = F.softmax(outputs, dim=1)[0]
             idx = torch.argmax(probs).item()
             conf = probs[idx].item() * 100

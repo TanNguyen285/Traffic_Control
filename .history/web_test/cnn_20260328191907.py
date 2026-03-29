@@ -3,7 +3,7 @@ import torch.nn.functional as F
 import cv2
 from PIL import Image
 
-class Simple_CNN_Service:
+class Simple_CNN_config:
     def __init__(self, model, transform, classes, device):
         self.net = model
         self.transform = transform
@@ -20,7 +20,7 @@ class Simple_CNN_Service:
         pil_img = Image.fromarray(rgb)
         
         # Tiền xử lý và đưa vào Model
-        input_tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
+        input_cnn = self.transform(pil_img).unsqueeze(0).to(self.device)
         
         with torch.no_grad():
             outputs = self.net(input_tensor)
