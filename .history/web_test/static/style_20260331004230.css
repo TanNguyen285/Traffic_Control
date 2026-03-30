@@ -105,8 +105,8 @@ body {
 }
 
 .camera-video {
-    width: 100%;
-    height: 500px;
+    width: 640px;
+    height: 640px;
     object-fit: cover;
     border-radius: 10px;
     background: #000;

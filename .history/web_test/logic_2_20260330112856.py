@@ -15,11 +15,11 @@ class TrafficLogic:
         self.cam = cam
         self.eth = eth_service 
         
-        self.id = station_id.upper()#setup trạm A /B
+        self.id = station_id.upper()
 
         # Timer
-        self.jam_timer = Timer()
-        self.relief_timer = Timer()
+        self.jam_timer = Timer("jam_A")
+        self.relief_timer = Timer("relief_A")
 
         # Thời gian các mode
         self.t_modes = {
@@ -30,22 +30,19 @@ class TrafficLogic:
             'A': t_ket
         }
 
-        self.t_y = t_y #đèn vàng
+        self.t_y = t_y
         self.is_jam_local_old = False
 
-        # THÊM TRIGGER (quan trọng)
-        self.bien_run = False
+        # 🔥 THÊM TRIGGER (quan trọng)
+        self.trigger_run = False
 
-    # CALLBACK từ UART
+    # 🔥 CALLBACK từ UART
     def uart_esp32_rasp(self):
         print("[AI] Nhận run từ UART")
-        self.bien_run= True
+        self.bien_run = True
         
 
     def AI_CNN_SCI(self, selected_image=None):
-        if not self.bien_run:
-            return None, None
-        self.bien_run = False # Reset trigger để chờ lần sau
         # 1. Lấy ảnh và Tiền xử lý
         is_upload = selected_image is not None
         frame_raw = selected_image if is_upload else self.cam.read()[1]

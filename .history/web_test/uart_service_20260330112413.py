@@ -60,15 +60,15 @@ class UART_config:
             return
 
         def run():
-            """Vòng lặp lắng nghe lệnh 'run' từ MCU"""
+            """Vòng lặp lắng nghe lệnh 'yell' từ MCU"""
             while True:
                 try:
                     if self.ser.in_waiting:
                         # Đọc, giải mã và làm sạch dữ liệu nhận được
                         line = self.ser.readline().decode('utf-8', errors='ignore').strip()
                         
-                        if line.lower() == "run":
-                            print("[UART] <<< Nhận 'run' -> Kích hoạt AI")
+                        if line.lower() == "yell":
+                            print("[UART] <<< Nhận 'yell' -> Kích hoạt AI")
                             nhanbien() 
                 except Exception as e:
                     print(f"[UART] Lỗi nhận: {e}")

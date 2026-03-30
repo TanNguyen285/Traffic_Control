@@ -29,8 +29,8 @@ function showError(msg) {
 
 // Update Functions
 function updateDensity(count) {
-    const total = document.getElementById("totalVehicles");
-    const level = document.getElementById("densityLevel");
+    const total = document.getElementById("tongxe");
+    const level = document.getElementById("mode");
     total.textContent = count;
     if (count < 5) level.textContent = "🟢 Ít";
     else if (count <= 10) level.textContent = "🟡 Trung bình";
@@ -38,7 +38,7 @@ function updateDensity(count) {
     else level.textContent = "🔴 Đông";
 }
 
-function updateLightTimes(g, y, r) {
+function time_light(g, y, r) {
     document.getElementById("greenTime").textContent = `${g}s`;
     document.getElementById("yellowTime").textContent = `${y}s`;
     document.getElementById("redTime").textContent = `${r}s`;
@@ -49,8 +49,8 @@ function showProcessedImage(url) {
     processedImg.src = url;
 }
 
-// Handle Response
-function handleCaptureResponse(data) {
+// Class data
+function xulyanhchupman(data) {
     let totalCount = 0;
     if (Array.isArray(data.counts)) {
         data.counts.forEach((c, i) => {
@@ -74,7 +74,7 @@ function handleCaptureResponse(data) {
     const total = data.total_seconds ?? data.red_seconds ?? 0;
     const red = total;
     const green = data.green_seconds ?? Math.max(0, red - yellow);
-    updateLightTimes(green, yellow, red);
+    time_light(green, yellow, red);
     showError("");
 }
 
@@ -100,7 +100,7 @@ async function chupmanhinh() {
         if (!res.ok) throw new Error("Lỗi server: " + res.status);
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        handleCaptureResponse(data);
+        xulyanhchupman(data);
         if (imageInput) {
             imageInput.value = "";
             fileNameDisplay.textContent = "Chưa chọn file";

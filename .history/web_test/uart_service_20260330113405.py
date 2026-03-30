@@ -68,7 +68,7 @@ class UART_config:
                         line = self.ser.readline().decode('utf-8', errors='ignore').strip()
                         
                         if line.lower() == "run":
-                            print("[UART] <<< Nhận 'run' -> Kích hoạt AI")
+                            print("[UART] <<< Nhận 'yell' -> Kích hoạt AI")
                             nhanbien() 
                 except Exception as e:
                     print(f"[UART] Lỗi nhận: {e}")

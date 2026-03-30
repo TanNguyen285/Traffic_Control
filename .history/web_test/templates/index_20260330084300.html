@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Điều khiển đèn giao thông</title>
+    <title>YOLOv8 Detection</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
 
     <header class="header">
         <div class="header-content">
-            <h1 class="title">Điều khiển đèn giao thông</h1>
+            <h1 class="title">🔍 YOLOv26 Detection</h1>
             <div class="status-panel" style="opacity:0.8; font-size:0.9em">YOLOv26</div>
         </div>
     </header>
@@ -23,7 +23,7 @@
                     <input type="file" id="imageInput" accept="image/*" class="file-input">
                     <div id="fileName" class="file-name">Chưa chọn file</div>
                     <div class="buttons-row" style="margin-top:10px">
-                        <button type="submit" class="btn-primary">Detect</button>
+                        <button type="submit" class="btn-primary">🚀 Detect</button>
                         <button id="cameraCaptureBtn" type="button" class="btn-secondary">📷 Chụp ảnh</button>
                     </div>
                 </form>
@@ -39,11 +39,11 @@
 
         <div class="middle-row images-grid">
             <div class="image-box">
-                <div class="image-header"><h2>Ảnh Gốc</h2><span class="badge">Input</span></div>
+                <div class="image-header"><h2>📸 Ảnh Gốc</h2><span class="badge">Input</span></div>
                 <img id="anhgoc" src="" class="result-image">
             </div>
             <div class="image-box">
-                <div class="image-header"><h2>Kết Quả</h2><span class="badge success">Output</span></div>
+                <div class="image-header"><h2>✨ Kết Quả</h2><span class="badge success">Output</span></div>
                 <img id="sauxuly" src="" class="result-image">
             </div>
         </div>
@@ -51,7 +51,7 @@
         <div class="bottom-row">
             <div class="config-section">
                 <div class="traffic-light-panel">
-                    <div class="section-title">Đèn Giao Thông</div>
+                    <div class="section-title">🚦 Đèn Giao Thông</div>
                     <div class="traffic-light-container">
                         {% for color, label, id_prefix in [('green','Xanh','green'), ('yellow','Vàng','yellow'), ('red','Đỏ','red')] %}
                         <div class="traffic-light-item active" id="status{{ color|capitalize }}">

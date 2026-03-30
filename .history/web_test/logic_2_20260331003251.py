@@ -18,8 +18,8 @@ class TrafficLogic:
         self.id = station_id.upper()#setup trạm A /B
 
         # Timer
-        self.jam_timer = Timer()
-        self.relief_timer = Timer()
+        self.jam_timer = Timer("jam_A")
+        self.relief_timer = Timer("relief_A")
 
         # Thời gian các mode
         self.t_modes = {

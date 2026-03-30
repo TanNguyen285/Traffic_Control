@@ -18,8 +18,8 @@ class TrafficLogic:
         self.id = station_id.upper()#setup trạm A /B
 
         # Timer
-        self.jam_timer = Timer()
-        self.relief_timer = Timer()
+        self.jam_timer = Timer("jam_A")
+        self.relief_timer = Timer("relief_A")
 
         # Thời gian các mode
         self.t_modes = {
@@ -33,10 +33,10 @@ class TrafficLogic:
         self.t_y = t_y #đèn vàng
         self.is_jam_local_old = False
 
-        # THÊM TRIGGER (quan trọng)
+        # 🔥 THÊM TRIGGER (quan trọng)
         self.bien_run = False
 
-    # CALLBACK từ UART
+    # 🔥 CALLBACK từ UART
     def uart_esp32_rasp(self):
         print("[AI] Nhận run từ UART")
         self.bien_run= True

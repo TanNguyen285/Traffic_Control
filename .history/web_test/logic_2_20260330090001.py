@@ -15,37 +15,19 @@ class TrafficLogic:
         self.cam = cam
         self.eth = eth_service 
         
-        self.id = station_id.upper()#setup trạm A /B
+        self.id = station_id.upper()
+        self.jam_timer = Timer("jam_A") # Sẽ tạo file timer_jam_A.json
+        # SỬ DỤNG FILE TIME.PY CỦA BẠN
+        self.jam_timer = Timer("jam_A")    # Đếm 150s kẹt
+        self.relief_timer = Timer("relief_A") # Đếm 20s cứu B
 
-        # Timer
-        self.jam_timer = Timer()
-        self.relief_timer = Timer()
-
-        # Thời gian các mode
         self.t_modes = {
-            'm1': t_m1,
-            'm2': t_m2,
-            'm3': t_m3,
-            'm4': t_m4,
-            'A': t_ket
+            'm1': t_m1, 'm2': t_m2, 'm3': t_m3, 'm4': t_m4, 'A': t_ket
         }
-
-        self.t_y = t_y #đèn vàng
+        self.t_y = t_y
         self.is_jam_local_old = False
 
-        # THÊM TRIGGER (quan trọng)
-        self.bien_run = False
-
-    # CALLBACK từ UART
-    def uart_esp32_rasp(self):
-        print("[AI] Nhận run từ UART")
-        self.bien_run= True
-        
-
     def AI_CNN_SCI(self, selected_image=None):
-        if not self.bien_run:
-            return None, None
-        self.bien_run = False # Reset trigger để chờ lần sau
         # 1. Lấy ảnh và Tiền xử lý
         is_upload = selected_image is not None
         frame_raw = selected_image if is_upload else self.cam.read()[1]
@@ -67,7 +49,7 @@ class TrafficLogic:
             counts_local = yolo_res.get("counts", [0, 0, 0, 0, 0])
 
         # --- Giao tiếp qua Ethernet ---
-        self.eth.send_data(ket_local, xe_local)
+        self.eth.send_data(ket_local, mode_local)
         remote_data = self.eth.get_remote_status()
 
         # 3. Gán biến A/a, B/b dựa trên ID trạm
@@ -75,7 +57,7 @@ class TrafficLogic:
             A, a = ket_local, not ket_local
             B = remote_data.get('ket', False)
             b = not B
-            xe_a, xe_b = xe_local, remote_data.get('xe', 0)
+            mode_local, xe_b = xe_local, remote_data.get('xe', 0)
         else:
             B, b = ket_local, not ket_local
             A = remote_data.get('ket', False)
@@ -138,7 +120,6 @@ class TrafficLogic:
             
             # 4. ĐỒNG BỘ VỚI TRẠM B VÀ HIỂN THỊ DEBUG
             self.eth.send_data(False, xe_local) # Gửi biến 'a' (False) và số xe cho trạm B
-
             sys.stdout.write(f"\r[THOÁNG] CNN: OK | YOLO: {xe_local} xe | Gửi ESP32: {cmd} ({t_m}s)    ")
             sys.stdout.flush()
 
@@ -163,7 +144,7 @@ class TrafficLogic:
     def _esp32_mode(self, total):
         if total < 5: return self.t_modes['m1'], "m1"
         elif total <= 10: return self.t_modes['m2'], "m2"
-        elif total <= 15: return self.t_modes['m3'], "m3"
+        elif total <= 20: return self.t_modes['m3'], "m3"
         return self.t_modes['m4'], "m4"
 
     def _to_base64_url(self, frame):

@@ -94,7 +94,7 @@ engine = TrafficLogic(
     eth_service=eth_service, # Truyền đối tượng EthernetService vào engine để sử dụng trong logic
     station_id='A', # Xác định đây là trạm A hay B (ảnh hưởng đến logic phân xử)
 )
-uart.start_listening(engine.uart_esp32_rasp)
+
 # Biến tạm lưu trữ ảnh người dùng tải lên từ giao diện web
 selected_image = None
 

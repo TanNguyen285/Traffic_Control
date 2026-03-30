@@ -53,6 +53,8 @@ cam = Camera(src=0)
 cam.start()
 # Khởi tạo UART Service và bắt đầu lắng nghe lệnh từ ESP32
 uart = UART_config(port="/dev/ttyAMA0", baudrate=115200)
+uart.start_listening(trigger_callback=lambda: print("[UART] Lệnh 'yell' nhận được từ ESP32"))
+
 # Khởi tạo dịch vụ Ethernet để giao tiếp giữa 2 trạm (A và B)
 eth_service = EthernetService(station_id='A', peer_ip='192.168.1.100')  # Thay thế bằng địa chỉ IP thực tế của trạm B
 
@@ -94,7 +96,7 @@ engine = TrafficLogic(
     eth_service=eth_service, # Truyền đối tượng EthernetService vào engine để sử dụng trong logic
     station_id='A', # Xác định đây là trạm A hay B (ảnh hưởng đến logic phân xử)
 )
-uart.start_listening(engine.uart_esp32_rasp)
+
 # Biến tạm lưu trữ ảnh người dùng tải lên từ giao diện web
 selected_image = None
 
