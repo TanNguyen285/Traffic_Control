@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Object Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <header class="header">
+        <div class="header-content">
+            <h1 class="title">🔍 YOLOv8 Object Detection</h1>
+            <div class="status-panel">
+                <div style="opacity:0.85;color:#99aabb;font-size:0.95em">YOLOv8 Demo</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="container">
+        <div class="main-content">
+
+            <!-- ===== ROW 1: TOP - Input (left) + Camera (right) ===== -->
+            <div class="top-row">
+
+                <!-- LEFT: File Input & Parameters -->
+                <div class="input-section">
+                    <section class="control-panel">
+                        <form id="yoloForm" class="form-group">
+                            <div class="form-section">
+                                <label class="form-label">
+                                    🎯 Confidence: <span class="value" id="confVal">0.5</span>
+                                </label>
+                                <input type="range" name="conf" min="0" max="1" step="0.1"
+                                       value="0.5" id="confSlider" class="slider">
+                            </div>
+
+                            <div class="form-section">
+                                <label class="form-label">
+                                    🔗 IOU: <span class="value" id="iouVal">0.5</span>
+                                </label>
+                                <input type="range" name="iou" min="0" max="1" step="0.1"
+                                       value="0.5" id="iouSlider" class="slider">
+                            </div>
+
+                            <div class="form-section buttons-row">
+                                <button type="submit" class="btn-primary">🚀 Detect</button>
+                                <button id="cameraCaptureBtn" type="button" class="btn-secondary">📷 Chụp ảnh</button>
+                            </div>
+                        </form>
+                    </section>
+                </div>
+
+                <!-- RIGHT: Camera realtime & capture (nhỏ, ngang với chọn ảnh) -->
+                <div class="camera-section">
+                    <section class="control-panel">
+                        <div class="camera-wrapper">
+                            <div class="camera-box">
+                                <div class="camera-label">Live</div>
+                                <!-- Server-side MJPEG stream từ Raspberry Pi (USB camera) -->
+                                <img id="cameraPreview" class="camera-video" src="/camera_stream" alt="Camera Stream">
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+            </div>
+
+            <!-- ===== ROW 2: MIDDLE - Images (full width) ===== -->
+            <div class="middle-row">
+                <div class="image-box">
+                    <div class="image-header">
+                        <h2>📸 Ảnh Gốc</h2>
+                        <span class="badge">Input</span>
+                    </div>
+                    <div class="image-wrapper">
+                        <img id="originalImg" src="" alt="Original Image" class="result-image">
+                    </div>
+                </div>
+
+                <div class="image-box">
+                    <div class="image-header">
+                        <h2>✨ Ảnh Sau Xử Lý</h2>
+                        <span class="badge success">Output</span>
+                    </div>
+                    <div class="image-wrapper">
+                        <img id="processedImg" src="" alt="Processed Image" class="result-image">
+                    </div>
+                    <a id="downloadBtn" href="#" download class="btn-secondary">⬇️ Download Kết Quả</a>
+                </div>
+            </div>
+
+            <!-- ===== ROW 3: BOTTOM - Config+Lights (left) + Counts (right) ===== -->
+            <div class="bottom-row">
+
+                <!-- LEFT: Traffic Lights + Density Display -->
+                <div class="config-section">
+                    
+                    <!-- Traffic Lights Panel -->
+                    <div class="traffic-light-panel">
+                        <div class="section-title-traffic">🚦 Trạng Thái Đèn Giao Thông</div>
+                        <div class="traffic-light-container">
+                            <div class="traffic-light-item active" id="statusGreen">
+                                <div class="light green"></div>
+                                <div class="light-info">
+                                    <span class="light-label">Xanh</span>
+                                    <div class="light-time" id="greenTime">0s</div>
+                                </div>
+                            </div>
+                            <div class="traffic-light-item active" id="statusYellow">
+                                <div class="light yellow"></div>
+                                <div class="light-info">
+                                    <span class="light-label">Vàng</span>
+                                    <div class="light-time" id="yellowTime">3s</div>
+                                </div>
+                            </div>
+                            <div class="traffic-light-item active" id="statusRed">
+                                <div class="light red"></div>
+                                <div class="light-info">
+                                    <span class="light-label">Đỏ</span>
+                                    <div class="light-time" id="redTime">0s</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Density Display -->
+                    <div class="density-panel">
+                        <h3 class="section-title">Mật Độ Giao Thông</h3>
+                        <div class="density-display">
+                            <div class="density-box">
+                                <div class="density-label">Tổng Số Xe</div>
+                                <div class="density-value" id="totalVehicles">0</div>
+                            </div>
+                            <div class="density-box">
+                                <div class="density-label">Mức Độ</div>
+                                <div class="density-level" id="densityLevel">—</div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- RIGHT: Count boxes -->
+                <div class="counts-section">
+                    <h3 class="section-title">Đếm xe theo lớp</h3>
+                    <div class="counts-grid" id="countsGrid">
+                        {% set names = class_names if class_names else ['car','threewheel','bus','truck','motorbike','van'] %}
+                        {% for i in range(6) %}
+                        <div class="count-box">
+                            <div class="count-value" id="count-{{ i }}">0</div>
+                            <div class="count-label">
+                                {{ names[i] if i < names|length else ('Class ' ~ (i+1)) }}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Loading & Error -->
+            <div id="loading" class="loading-indicator">
+                <div class="spinner"></div>
+                <p>⏳ Đang xử lý ảnh...</p>
+            </div>
+            <div id="errorMessage" class="error-message"></div>
+
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>YOLOv8 Detection Engine • Powered by Ultralytics</p>
+    </footer>
+
+    <!-- JS -->
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

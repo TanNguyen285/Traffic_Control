@@ -1,0 +1,24 @@
+B1: download code từ github
+# git clone https://github.com/TanNguyen285/my_yolov8n_train.git
+B2: tạo môi trường ảo
+# python3 -m venv (tên môi trường ảo)
+# ví dụ: python3 -m venv yolo
+B3: kích hoạt môi trường ảo
+# source yolo/bin/activate
+B4: cài đặt các thư viện cần thiết
+# pip install -r my_yolov8n_train/requirements.txt
+B5: chỉnh file yolo_flask.sh
+# chỉnh sửa file yolo_flask.sh, thay đường dẫn môi trường ảo và app.py cho đúng
+B6: chạy lệnh cho phép thực thi file yolo_flask.sh
+# chmod +x yolo_flask.sh
+B7: Tạo file service cho systemd (tự động chạy khi cắm nguồn)
+# sudo nano /etc/systemd/system/yolo_flask.service
+# dán nội dung sau vào file yolo_flask.service
+# Ctrl+O để lưu, Ctrl+X để thoát
+B8: reload systemd và enable service
+# sudo systemctl daemon-reload
+# sudo systemctl enable yolo_flask.service
+# sudo systemctl start yolo_flask.service
+B9: kiểm tra trạng thái service
+# sudo systemctl status yolo_flask.service ( xem có lỗi gì không )
+#journalctl -u flask_app -f ( xem log chi tiết )
