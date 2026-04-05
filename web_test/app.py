@@ -54,7 +54,7 @@ cam.start()
 # Khởi tạo UART Service và bắt đầu lắng nghe lệnh từ ESP32
 uart = UART_config(port="/dev/ttyAMA0", baudrate=115200)
 # Khởi tạo dịch vụ Ethernet để giao tiếp giữa 2 trạm (A và B)
-eth_service = EthernetService(station_id='A', peer_ip='192.168.1.100')  # Thay thế bằng địa chỉ IP thực tế của trạm B
+eth_service = EthernetService(station_id='Tram_A', peer_ip='192.168.1.100')  # Thay thế bằng địa chỉ IP thực tế của trạm B
 
 # Khởi tạo bộ tiền xử lý ảnh (Resize về 640x640 cho YOLO)
 pre_proc = Tienxulyanh(sci_path=Config.SCI_PATH, target_size=(640, 640), use_sci=True)
@@ -92,7 +92,7 @@ engine = TrafficLogic(
     uart=uart, 
     cam=cam,
     eth_service=eth_service, # Truyền đối tượng EthernetService vào engine để sử dụng trong logic
-    station_id='A', # Xác định đây là trạm A hay B (ảnh hưởng đến logic phân xử)
+    station_id='Tram_A', # Xác định đây là trạm A hay B (ảnh hưởng đến logic phân xử)
 )
 uart.start_listening(engine.uart_esp32_rasp)
 # Biến tạm lưu trữ ảnh người dùng tải lên từ giao diện web
@@ -109,7 +109,7 @@ def index():
 @app.route('/camera_capture', methods=['POST'])
 def camera_capture():
     global selected_image
-    res, _ = engine.AI_CNN_SCI(selected_image)
+    res, _ = engine.thuc_thi_AI(selected_image)
     selected_image = None # Reset lại ảnh sau khi xử lý xong
     return jsonify(res) # Trả kết quả JSON về cho giao diện Web
 

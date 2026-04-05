@@ -28,6 +28,13 @@ class TrafficLogic:
         self.xe_local = 0
         self.yolo_results = {"counts": [0,0,0,0,0], "yolo_image": None}
 
+    def _to_base64_url(self, frame):
+        if frame is None:
+            return None
+        _, buf = cv2.imencode('.jpg', frame)
+        b64 = base64.b64encode(buf).decode('utf-8')
+        return f"data:image/jpeg;base64,{b64}"
+
     # ==========================================
     # CALLBACK TỪ UART
     # ==========================================
@@ -101,7 +108,7 @@ class TrafficLogic:
         else:
             self.xe_local = 0
             # Giả lập kết quả yolo trống khi kẹt để UI không bị lỗi
-            self.yolo_results = {"yolo_image": self._to_base64_url(self.frame_yolo) if hasattr(self, '_to_base64_url') else None, "counts": [0,0,0,0,0]}
+            self.yolo_results = {"counts": [0, 0, 0, 0, 0], "yolo_image": None}
 
         # ==========================================
         # ĐỒNG BỘ MẠNG (CÓ BẢO VỆ CHỐNG MẤT KẾT NỐI)
@@ -163,7 +170,7 @@ class TrafficLogic:
             "remote_connected": remote_connected,  # <--- BẠN THÊM DÒNG NÀY VÀO NHÉ
             "brightness": round(self.brightness, 2),
             "counts": self.yolo_results.get("counts", [0, 0, 0, 0, 0]),
-            "input_image": self._to_base64_url(self.frame_raw) if hasattr(self, '_to_base64_url') else None, 
+            "input_image": self._to_base64_url(self.frame_raw), 
             "yolo_image": self.yolo_results.get('yolo_image')
         }
         return result, cmd
