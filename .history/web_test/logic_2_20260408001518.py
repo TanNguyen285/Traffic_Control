@@ -77,79 +77,64 @@ class TrafficLogic:
     # ==========================================
     # KHỐI 4: ĐIỀU PHỐI LOGIC CHÍNH
     # ==========================================
+    
+    # ==========================================
+    # KHỐI 4: ĐIỀU PHỐI LOGIC CHÍNH (Đã sửa)
+    # ==========================================
     def thuc_thi_AI(self, selected_image=None):
-        """
-        Logic: Nếu kẹt (A), im lặng chạy AI liên tục cho đến khi 
-        thoáng (a) hoặc có biến run1 thì mới gửi lệnh và thoát.
-        """
-        # 1. KIỂM TRA TRIGGER BAN ĐẦU
-        if not self.bien_run and not self.bien_run1:
-            return None, None
-        
-        # Lưu lại trạng thái ban đầu để biết có cần vào vòng lặp kẹt không
-        # Nếu chưa có ảnh thì phải chụp lần đầu để kiểm tra
-        if self.frame_raw is None or self.bien_run:
-            if not self.module_chup_anh(selected_image):
-                return {"error": "No Frame"}, "m0"
-            self.ket_local = self.module_chay_cnn()
-
-        self.bien_run = False # Reset trigger
-
-        # 2. KHỐI XỬ LÝ VÒNG LẶP KẸT XE (IM LẶNG)
-        # Nếu CNN báo kẹt (A), bắt đầu vòng lặp "quét ngầm"
-        while self.ket_local:
-            # Kiểm tra lệnh xả trạm (run1) để thoát khẩn cấp
-            if self.bien_run1:
-                break 
-            
-            # Chụp ảnh và quét lại CNN liên tục (Không gửi UART/ETH ở đây)
-            if self.module_chup_anh(selected_image):
-                self.ket_local = self.module_chay_cnn()
-            
-            # Tùy chọn: Nghỉ 100ms để tránh treo CPU vì vòng lặp quá nhanh
-            # import time; time.sleep(0.1)
-
-        # 3. KHI THOÁT KHỎI VÒNG LẶP (Có 2 trường hợp: Hết kẹt hoặc bị ép bởi run1)
-        
-        # Nếu thoát do run1 (Xả trạm)
+        # 1. XỬ LÝ RUN1 (LỆNH ƯU TIÊN XẢ TRẠM TỪ UI)
         if self.bien_run1:
             self.bien_run1 = False
-            self.ket_local = False # Coi như hết kẹt để cập nhật UI
-            cmd_final = "m2"
-        else:
-            # Nếu thoát do Hết kẹt (a) -> Chạy nốt YOLO để đếm xe lần cuối
-            self.xe_local = self.module_chay_yolo()
-            cmd_final = None # Sẽ tính toán ở bước dưới
+            self.uart.send("m2")
+            return {"status": "force_m2"}, "m2"
 
-        # 4. ĐỒNG BỘ MẠNG VÀ TÍNH TOÁN LỆNH CUỐI CÙNG
+        # 2. KIỂM TRA LỆNH CHO PHÉP CHẠY TỪ ĐIỀU KHIỂN (ESP32)
+        if not self.bien_run:
+            return None, None
+        self.bien_run = False
+
+        # 3. THU THẬP DỮ LIỆU LOCAL
+        if not self.module_chup_anh(selected_image):
+            return {"error": "No Frame"}, "m0"
+
+        self.ket_local = self.module_chay_cnn()
+        if not self.ket_local:
+            self.xe_local = self.module_chay_yolo()
+        else:
+            self.xe_local = 0
+            self.yolo_results = {
+                "yolo_image": self._to_base64_url(self.frame_yolo) if hasattr(self, '_to_base64_url') else None, 
+                "counts": [0,0,0,0,0]
+            }
+
+        # 4. ĐỒNG BỘ MẠNG (Xử lý để không bị treo khi mất mạng)
         remote_connected = False
         ket_remote, xe_remote = False, 0 
 
         try:
-            # Chỉ gửi và nhận dữ liệu 1 LẦN DUY NHẤT sau khi đã thoát kẹt
+            # Gửi data đi
             self.eth.send_data(self.ket_local, self.xe_local)
+            # Thử lấy data về
             response = self.eth.get_remote_status()
-            if isinstance(response, dict):
+            
+            if response is not None and isinstance(response, dict):
                 ket_remote = response.get('ket', False)
                 xe_remote = response.get('xe', 0)
                 remote_connected = True
-        except:
-            print("[CẢNH BÁO] Chế độ độc lập")
+        except Exception as e:
+            # Nếu mất kết nối, remote_connected vẫn là False, code vẫn chạy tiếp
+            print(f"[CẢNH BÁO] Chế độ độc lập (Mất mạng): {e}")
 
-        # Nếu chưa có lệnh từ run1 thì mới tính logic phối hợp
-        if cmd_final is None:
-            cmd_final = self.logic_dieu_khien(
-                self.ket_local, self.xe_local, 
-                ket_remote, xe_remote, 
-                remote_connected
-            )
+        # 5. TÍNH TOÁN LOGIC QUYẾT ĐỊNH (Truyền thêm remote_connected)
+        cmd = self.logic_dieu_khien(self.ket_local, self.xe_local, ket_remote, xe_remote, remote_connected)
 
-        # 5. GỬI LỆNH XUỐNG ESP32 (CHỈ GỬI 1 LẦN SAU CÙNG)
-        self.uart.send(cmd_final)
+        # 6. THỰC THI GỬI LỆNH
+        self.uart.send(cmd)
 
-        # 6. TRẢ KẾT QUẢ HIỂN THỊ
-        result = self._dong_goi_ket_qua_hien_thi(remote_connected, ket_remote, xe_remote, cmd_final)
-        return result, cmd_final
+        # 7. ĐÓNG GÓI KẾT QUẢ
+        result = self._dong_goi_ket_qua_hien_thi(remote_connected, ket_remote, xe_remote, cmd)
+        return result, cmd
+
     # ==========================================
     # KHỐI LOGIC XỬ LÝ (Đã sửa để chạy độc lập)
     # ==========================================

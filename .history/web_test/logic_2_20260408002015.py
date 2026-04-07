@@ -77,6 +77,7 @@ class TrafficLogic:
     # ==========================================
     # KHỐI 4: ĐIỀU PHỐI LOGIC CHÍNH
     # ==========================================
+    
     def thuc_thi_AI(self, selected_image=None):
         """
         Logic: Nếu kẹt (A), im lặng chạy AI liên tục cho đến khi 
