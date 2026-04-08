@@ -32,11 +32,17 @@ app = Flask(__name__)
 # 3. CẤU HÌNH HỆ THỐNG (CONFIG)
 # ==========================================================
 class Config:
+    # Đường dẫn tới file model YOLO đã được tối ưu (định dạng NCNN cho CPU)
     YOLO_PATH = "runs/detect/yolov26_epoch50/weights/best_ncnn_model"
+    # Đường dẫn tới file model CNN phân loại trạng thái
     CNN_PATH = "runs/exp3/best_cnn_model.pth"
+    # Đường dẫn tới file model SCI
     SCI_PATH = "web_test/weights/difficult.pt"
+    # Tự động chọn GPU (cuda) nếu có, nếu không dùng CPU
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Tên các nhãn phân loại của mô hình CNN
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
+    # Các loại phương tiện mà mô hình YOLO sẽ tập trung nhận diện
     YOLO_CLASSES = ['car', 'van', 'bus', 'motorcycle', 'truck']
 
 # ==========================================================
@@ -75,6 +81,7 @@ ai_yolo = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
 cnn_net = SimpleCNN(num_classes=2).to(Config.DEVICE)
 cnn_net.load_state_dict(torch.load(Config.CNN_PATH, map_location=Config.DEVICE))
 cnn_net.eval() # Chuyển sang chế độ dự đoán (không phải huấn luyện)
+
 # --- Cấu hình chuẩn hóa ảnh cho CNN (giống hệt lúc huấn luyện) ---
 cnn_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -89,9 +96,9 @@ cnn_service = Simple_CNN_config(
     classes=Config.CNN_CLASSES, 
     device=Config.DEVICE
 )
-#===========================================================
-#=================TrafficLogic==============================
-#===========================================================
+
+# --- Khởi tạo ENGINE điều phối (TrafficLogic mới) ---
+# Bây giờ engine chỉ nhận cnn_service thay vì nhận lẻ tẻ từng biến cnn_net, cnn_transform
 engine = TrafficLogic(
     yolo_ai=ai_yolo, 
     cnn_service=cnn_service, 

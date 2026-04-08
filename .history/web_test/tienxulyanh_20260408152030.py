@@ -4,7 +4,7 @@ import torch
 from PIL import Image
 import torchvision.transforms as transforms
 from model_sci import Finetunemodel
-from ROI import ROIManager # Import file mới tách
+from roi_manager import ROIManager # Import file mới tách
 
 class Tienxulyanh:
     def __init__(self, sci_path, target_size=(640, 640), use_sci=True, polygon_pts=None):

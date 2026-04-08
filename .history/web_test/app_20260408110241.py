@@ -32,11 +32,17 @@ app = Flask(__name__)
 # 3. CẤU HÌNH HỆ THỐNG (CONFIG)
 # ==========================================================
 class Config:
+    # Đường dẫn tới file model YOLO đã được tối ưu (định dạng NCNN cho CPU)
     YOLO_PATH = "runs/detect/yolov26_epoch50/weights/best_ncnn_model"
+    # Đường dẫn tới file model CNN phân loại trạng thái
     CNN_PATH = "runs/exp3/best_cnn_model.pth"
+    # Đường dẫn tới file model SCI
     SCI_PATH = "web_test/weights/difficult.pt"
+    # Tự động chọn GPU (cuda) nếu có, nếu không dùng CPU
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Tên các nhãn phân loại của mô hình CNN
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
+    # Các loại phương tiện mà mô hình YOLO sẽ tập trung nhận diện
     YOLO_CLASSES = ['car', 'van', 'bus', 'motorcycle', 'truck']
 
 # ==========================================================
@@ -50,31 +56,18 @@ uart = UART_config(port="/dev/ttyAMA0", baudrate=115200)
 # Khởi tạo dịch vụ Ethernet để giao tiếp giữa 2 trạm (A và B)
 eth_service = EthernetService(station_id='Tram_A', peer_ip='192.168.1.100')  # Thay thế bằng địa chỉ IP thực tế của trạm B
 
+# Khởi tạo bộ tiền xử lý ảnh (Resize về 640x640 cho YOLO)
+pre_proc = Tienxulyanh(sci_path=Config.SCI_PATH, target_size=(640, 640), use_sci=True)
 
-#===========================================================
-#=================Tienxulyanh===============================
-#===========================================================
-vung_cam_bien = [[0, 640], [100, 300], [540, 300], [640, 640]]
-
-pre_proc = Tienxulyanh(
-    sci_path=Config.SCI_PATH, 
-    target_size=(640, 640), 
-    use_sci=True,
-    polygon_pts=vung_cam_bien
-)
-
-#===========================================================
-#========================YOLO===============================
-#===========================================================
+# --- Tải mô hình YOLO ---
 yolo_model = YOLO(Config.YOLO_PATH)
 ai_yolo = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
 
-#===========================================================
-#==================SimpleCNN===============================
-#===========================================================
+# --- Tải mô hình CNN ---
 cnn_net = SimpleCNN(num_classes=2).to(Config.DEVICE)
 cnn_net.load_state_dict(torch.load(Config.CNN_PATH, map_location=Config.DEVICE))
 cnn_net.eval() # Chuyển sang chế độ dự đoán (không phải huấn luyện)
+
 # --- Cấu hình chuẩn hóa ảnh cho CNN (giống hệt lúc huấn luyện) ---
 cnn_transform = transforms.Compose([
     transforms.Resize((224, 224)),
@@ -89,9 +82,9 @@ cnn_service = Simple_CNN_config(
     classes=Config.CNN_CLASSES, 
     device=Config.DEVICE
 )
-#===========================================================
-#=================TrafficLogic==============================
-#===========================================================
+
+# --- Khởi tạo ENGINE điều phối (TrafficLogic mới) ---
+# Bây giờ engine chỉ nhận cnn_service thay vì nhận lẻ tẻ từng biến cnn_net, cnn_transform
 engine = TrafficLogic(
     yolo_ai=ai_yolo, 
     cnn_service=cnn_service, 
@@ -102,6 +95,7 @@ engine = TrafficLogic(
     station_id='Tram_A', # Xác định đây là trạm A hay B (ảnh hưởng đến logic phân xử)
 )
 uart.start_listening(engine.uart_esp32_rasp)
+# Biến tạm lưu trữ ảnh người dùng tải lên từ giao diện web
 
 # ==========================================================
 # 5. CÁC ROUTE (ĐƯỜNG DẪN WEB)
@@ -113,8 +107,20 @@ def index():
 
 @app.route('/camera_capture', methods=['POST'])
 def camera_capture():
-    res, _ = engine.thuc_thi_AI() # Thực thi toàn bộ luồng AI và nhận kết quả trả về để hiển thị
+    global selected_image
+    res, _ = engine.thuc_thi_AI(selected_image)
+    selected_image = None # Reset lại ảnh sau khi xử lý xong
     return jsonify(res) # Trả kết quả JSON về cho giao diện Web
+
+@app.route('/upload_image', methods=['POST'])
+def upload_image():
+    global selected_image
+    file = request.files.get('file')
+    if file:
+        nparr = np.frombuffer(file.read(), np.uint8)
+        selected_image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        return jsonify({"success": True})
+    return jsonify({"error": "No file"}), 400
 
 @app.route('/camera_stream')
 def camera_stream():

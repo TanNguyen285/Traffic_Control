@@ -196,7 +196,7 @@ class TrafficLogic:
     # ==========================================
     # KHỐI DỮ LIỆU KẾT QUẢ (DATA FORMATTER)
     # ==========================================
-    def result_AI(self, remote_connected, ket_remote, xe_remote, cmd):
+    def _dong_goi_ket_qua_hien_thi(self, remote_connected, ket_remote, xe_remote, cmd):
         """Chuẩn bị dữ liệu để đẩy lên UI"""
         return {
             "cnn_status": "Ket Xe" if self.ket_local else "Thoang",

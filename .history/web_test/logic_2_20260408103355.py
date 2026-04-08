@@ -1,4 +1,3 @@
-import time
 import cv2
 import base64
 import sys
@@ -56,16 +55,11 @@ class TrafficLogic:
     # KHỐI 2: CHẠY CNN (Nhận diện kẹt)
     # ==========================================
     def module_chay_cnn(self):
+        """Chỉ chạy CNN. Trả về True nếu kẹt xe"""
         if self.frame_cnn is None: return False
         
-        # 1. Dự đoán
-        status_local, conf, _ = self.cnn.predict(self.frame_cnn)
+        status_local, _, _ = self.cnn.predict(self.frame_cnn)
         self.ket_local = (status_local == "Ket Xe")
-        
-        # 2. Vẽ lên frame_raw để hiển thị ra màn hình/web
-        # Chúng ta vẽ lên frame_raw vì frame_cnn thường rất nhỏ (224x224)
-        self.frame_raw = self.cnn.draw_prediction(self.frame_raw, status_local, conf)
-        
         return self.ket_local
 
     # ==========================================
@@ -81,7 +75,7 @@ class TrafficLogic:
     # ==========================================
     # KHỐI 4: ĐIỀU PHỐI LOGIC CHÍNH
     # ==========================================
-    def thuc_thi_AI(self):
+    def thuc_thi_AI(self, selected_image=None):
         """
         Logic: Nếu kẹt (A), im lặng chạy AI liên tục cho đến khi 
         thoáng (a) hoặc có biến run1 thì mới gửi lệnh và thoát.
@@ -93,7 +87,7 @@ class TrafficLogic:
         # Lưu lại trạng thái ban đầu để biết có cần vào vòng lặp kẹt không
         # Nếu chưa có ảnh thì phải chụp lần đầu để kiểm tra
         if self.frame_raw is None or self.bien_run:
-            if not self.module_chup_anh():
+            if not self.module_chup_anh(selected_image):
                 return {"error": "No Frame"}, "m0"
             self.ket_local = self.module_chay_cnn()
 
@@ -101,16 +95,15 @@ class TrafficLogic:
 
         # 2. KHỐI XỬ LÝ VÒNG LẶP KẸT XE (IM LẶNG)
         # Nếu CNN báo kẹt (A), bắt đầu vòng lặp "quét ngầm"
-        # 2. KHỐI XỬ LÝ VÒNG LẶP KẸT XE (IM LẶNG)
         while self.ket_local:
+            # Kiểm tra lệnh xả trạm (run1) để thoát khẩn cấp
             if self.bien_run1:
                 break 
-    
-    # Gọi hàm không tham số vì mình đã dọn dẹp module_chup_anh rồi
-            if self.module_chup_anh(): 
+            
+            # Chụp ảnh và quét lại CNN liên tục (Không gửi UART/ETH ở đây)
+            if self.module_chup_anh(selected_image):
                 self.ket_local = self.module_chay_cnn()
-    
-            time.sleep(0.2)
+            
             # Tùy chọn: Nghỉ 100ms để tránh treo CPU vì vòng lặp quá nhanh
             # import time; time.sleep(0.1)
 
@@ -196,7 +189,7 @@ class TrafficLogic:
     # ==========================================
     # KHỐI DỮ LIỆU KẾT QUẢ (DATA FORMATTER)
     # ==========================================
-    def result_AI(self, remote_connected, ket_remote, xe_remote, cmd):
+    def _dong_goi_ket_qua_hien_thi(self, remote_connected, ket_remote, xe_remote, cmd):
         """Chuẩn bị dữ liệu để đẩy lên UI"""
         return {
             "cnn_status": "Ket Xe" if self.ket_local else "Thoang",

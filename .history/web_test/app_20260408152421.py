@@ -32,11 +32,17 @@ app = Flask(__name__)
 # 3. CẤU HÌNH HỆ THỐNG (CONFIG)
 # ==========================================================
 class Config:
+    # Đường dẫn tới file model YOLO đã được tối ưu (định dạng NCNN cho CPU)
     YOLO_PATH = "runs/detect/yolov26_epoch50/weights/best_ncnn_model"
+    # Đường dẫn tới file model CNN phân loại trạng thái
     CNN_PATH = "runs/exp3/best_cnn_model.pth"
+    # Đường dẫn tới file model SCI
     SCI_PATH = "web_test/weights/difficult.pt"
+    # Tự động chọn GPU (cuda) nếu có, nếu không dùng CPU
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # Tên các nhãn phân loại của mô hình CNN
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
+    # Các loại phương tiện mà mô hình YOLO sẽ tập trung nhận diện
     YOLO_CLASSES = ['car', 'van', 'bus', 'motorcycle', 'truck']
 
 # ==========================================================

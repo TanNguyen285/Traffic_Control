@@ -1,6 +1,7 @@
 import cv2
 import os
 import uuid
+import time
 import json
 import base64 
 
@@ -52,6 +53,7 @@ class Yolo_AI:
                 "counts": counts,             
                 "xe_local": total,            # Đã sửa ở đây
                 "brightness": round(brightness_val, 2),
+                "timestamp": int(time.time())
             }
 
             # Chuyển đổi ảnh sang Base64

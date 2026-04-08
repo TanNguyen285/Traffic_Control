@@ -1,4 +1,5 @@
-import time
+from time import time
+
 import cv2
 import base64
 import sys
@@ -56,16 +57,11 @@ class TrafficLogic:
     # KHỐI 2: CHẠY CNN (Nhận diện kẹt)
     # ==========================================
     def module_chay_cnn(self):
+        """Chỉ chạy CNN. Trả về True nếu kẹt xe"""
         if self.frame_cnn is None: return False
         
-        # 1. Dự đoán
-        status_local, conf, _ = self.cnn.predict(self.frame_cnn)
+        status_local, _, _ = self.cnn.predict(self.frame_cnn)
         self.ket_local = (status_local == "Ket Xe")
-        
-        # 2. Vẽ lên frame_raw để hiển thị ra màn hình/web
-        # Chúng ta vẽ lên frame_raw vì frame_cnn thường rất nhỏ (224x224)
-        self.frame_raw = self.cnn.draw_prediction(self.frame_raw, status_local, conf)
-        
         return self.ket_local
 
     # ==========================================
@@ -196,7 +192,7 @@ class TrafficLogic:
     # ==========================================
     # KHỐI DỮ LIỆU KẾT QUẢ (DATA FORMATTER)
     # ==========================================
-    def result_AI(self, remote_connected, ket_remote, xe_remote, cmd):
+    def _dong_goi_ket_qua_hien_thi(self, remote_connected, ket_remote, xe_remote, cmd):
         """Chuẩn bị dữ liệu để đẩy lên UI"""
         return {
             "cnn_status": "Ket Xe" if self.ket_local else "Thoang",
