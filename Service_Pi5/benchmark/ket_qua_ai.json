@@ -1,0 +1,51 @@
+{
+    "SCI": {
+        "latency_ms": 2.92,
+        "fps": 342.22,
+        "input_size": "(640, 640)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:24:21"
+    },
+    "Yolo_PT": {
+        "latency_ms": 11.68,
+        "fps": 85.58,
+        "input_size": "(640, 640)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:31:42"
+    },
+    "Yolo_NCNN": {
+        "latency_ms": 61.35,
+        "fps": 16.3,
+        "input_size": "(640, 640)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:33:20"
+    },
+    "SimpleCNN": {
+        "latency_ms": 1.77,
+        "fps": 563.77,
+        "input_size": "(160, 160)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:34:41"
+    },
+    "SCI+Yolo_PT": {
+        "latency_ms": 18.54,
+        "fps": 53.93,
+        "input_size": "(640->Input)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:39:37"
+    },
+    "SCI+Yolo_NCNN": {
+        "latency_ms": 47.87,
+        "fps": 20.89,
+        "input_size": "(640->Input)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:40:40"
+    },
+    "SCI+SimpleCNN": {
+        "latency_ms": 2.51,
+        "fps": 397.72,
+        "input_size": "(640->Input)",
+        "device": "cuda",
+        "timestamp": "2026-04-13 00:41:22"
+    }
+}
