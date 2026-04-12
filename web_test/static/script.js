@@ -1,12 +1,6 @@
-// Frontend Script for YOLO Detection
-
 // DOM Elements
-const form = document.getElementById("yoloForm");
-const imageInput = document.getElementById("imageInput");
-const fileNameDisplay = document.getElementById("fileName");
 const originalImg = document.getElementById("anhgoc");
 const processedImg = document.getElementById("sauxuly");
-const cameraPreview = document.getElementById("cameraPreview");
 const cameraCaptureBtn = document.getElementById("cameraCaptureBtn");
 const loading = document.getElementById("loading");
 const errorMessage = document.getElementById("errorMessage");
@@ -14,12 +8,14 @@ const errorMessage = document.getElementById("errorMessage");
 // UI Functions
 function uiStart() {
     loading.style.display = "block";
-    form.querySelector(".btn-primary").disabled = true;
+    cameraCaptureBtn.disabled = true;
+    cameraCaptureBtn.style.opacity = "0.7";
 }
 
 function uiEnd() {
     loading.style.display = "none";
-    form.querySelector(".btn-primary").disabled = false;
+    cameraCaptureBtn.disabled = false;
+    cameraCaptureBtn.style.opacity = "1";
 }
 
 function showError(msg) {
@@ -31,6 +27,8 @@ function showError(msg) {
 function updateDensity(count) {
     const total = document.getElementById("tongxe");
     const level = document.getElementById("mode");
+    if (!total || !level) return;
+
     total.textContent = count;
     if (count < 5) level.textContent = "🟢 Ít";
     else if (count <= 10) level.textContent = "🟡 Trung bình";
@@ -39,114 +37,72 @@ function updateDensity(count) {
 }
 
 function time_light(g, y, r) {
-    document.getElementById("greenTime").textContent = `${g}s`;
-    document.getElementById("yellowTime").textContent = `${y}s`;
-    document.getElementById("redTime").textContent = `${r}s`;
+    const gt = document.getElementById("greenTime");
+    const yt = document.getElementById("yellowTime");
+    const rt = document.getElementById("redTime");
+    
+    if(gt) gt.textContent = `${g}s`;
+    if(yt) yt.textContent = `${y}s`;
+    if(rt) rt.textContent = `${r}s`;
 }
 
-function showProcessedImage(url) {
-    processedImg.onload = () => processedImg.classList.add("active");
-    processedImg.src = url;
-}
-
-// Class data
-function xulyanhchupman(data) {
-    let totalCount = 0;
+// Logic xử lý dữ liệu trả về từ API
+function xulyKetQua(data) {
+    // 1. Cập nhật số lượng từng loại xe
     if (Array.isArray(data.counts)) {
+        let totalCount = 0;
         data.counts.forEach((c, i) => {
             const el = document.getElementById(`count-${i}`);
             if (el) el.textContent = c;
             totalCount += c;
         });
+        updateDensity(totalCount);
     }
-    updateDensity(totalCount);
 
+    // 2. Hiển thị ảnh gốc đã chụp
     if (data.input_image) {
         originalImg.src = data.input_image;
         originalImg.classList.add("active");
     }
 
+    // 3. Hiển thị ảnh đã qua YOLO xử lý
     if (data.yolo_image) {
-        showProcessedImage(data.yolo_image);
+        processedImg.src = data.yolo_image;
+        processedImg.classList.add("active");
     }
 
+    // 4. Cập nhật thời gian đèn
     const yellow = data.yellow_seconds ?? 3;
-    const total = data.total_seconds ?? data.red_seconds ?? 0;
-    const red = total;
+    const red = data.total_seconds ?? data.red_seconds ?? 0;
     const green = data.green_seconds ?? Math.max(0, red - yellow);
     time_light(green, yellow, red);
+    
     showError("");
 }
 
-// API Calls
-async function uploadfile() {
-    if (imageInput && imageInput.files && imageInput.files.length > 0) {
-        const file = imageInput.files[0];
-        const fd = new FormData();
-        fd.append('file', file);
-        const upl = await fetch('/upload_image', { method: 'POST', body: fd });
-        if (!upl.ok) throw new Error('Upload failed ' + upl.status);
-        const j = await upl.json();
-        if (j.error) throw new Error(j.error);
-    }
-}
-
-async function chupmanhinh() {
+// Gọi API Capture
+async function chupVaPhanTich() {
     uiStart();
     showError("");
     try {
-        await uploadfile();
         const res = await fetch(`/camera_capture`, { method: "POST" });
-        if (!res.ok) throw new Error("Lỗi server: " + res.status);
+        if (!res.ok) throw new Error("Lỗi kết nối server.");
+        
         const data = await res.json();
         if (data.error) throw new Error(data.error);
-        xulyanhchupman(data);
-        if (imageInput) {
-            imageInput.value = "";
-            fileNameDisplay.textContent = "Chưa chọn file";
-            fileNameDisplay.style.color = "#999";
-        }
+        
+        xulyKetQua(data);
     } catch (err) {
-        showError("Lỗi: " + err.message);
+        showError(err.message);
     } finally {
         uiEnd();
     }
 }
 
-// Camera
-function startCamera() {
-    cameraPreview.src = "/camera_stream";
-}
-
 // Event Listeners
+cameraCaptureBtn.addEventListener("click", chupVaPhanTich);
+
+// Tự động kiểm tra trạng thái camera khi trang load (nếu cần)
 window.addEventListener("DOMContentLoaded", () => {
-    startCamera();
-});
-
-cameraCaptureBtn.addEventListener("click", async (e) => {
-    e.preventDefault();
-    if (imageInput) {
-        imageInput.value = "";
-        fileNameDisplay.textContent = "Chưa chọn file";
-        fileNameDisplay.style.color = "#999";
-    }
-    await chupmanhinh();
-});
-
-if (imageInput) {
-    imageInput.addEventListener("change", () => {
-        const f = imageInput.files[0];
-        if (!f) {
-            fileNameDisplay.textContent = "Chưa chọn file";
-            fileNameDisplay.style.color = "#999";
-            return;
-        }
-        fileNameDisplay.textContent = `✓ ${f.name}`;
-        fileNameDisplay.style.color = "#44dd44";
-    });
-}
-
-form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    await chupmanhinh();
+    console.log("Hệ thống YOLOv26 đã sẵn sàng.");
 });
