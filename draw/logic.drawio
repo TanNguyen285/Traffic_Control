@@ -489,7 +489,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="oGH2f-ezF8nq2UcxMWKI-9" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=50;fillColor=#f8cecc;strokeColor=#b85450;" value="&lt;span style=&quot;font-size: 30px;&quot;&gt;Logic&lt;/span&gt;" vertex="1">
-          <mxGeometry height="1030" width="1080" x="2180" y="1238.5" as="geometry">
+          <mxGeometry height="1030" width="1080" x="1120" y="1140" as="geometry">
             <mxRectangle height="50" width="190" x="2180" y="1120" as="alternateBounds" />
           </mxGeometry>
         </mxCell>

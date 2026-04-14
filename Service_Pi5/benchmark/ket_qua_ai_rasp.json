@@ -1,0 +1,7 @@
+{
+    "SCI": {"latency_ms": 29.19, "fps": 34.26},
+    "Yolo_NCNN": {"latency_ms": 46.91, "fps": 21.32},
+    "SimpleCNN": {"latency_ms": 73.21, "fps": 13.66},
+    "SCI+Yolo_NCNN": {"latency_ms": 94.1, "fps": 10.63},
+    "SCI+SimpleCNN": {"latency_ms": 91.86, "fps": 10.89}
+}

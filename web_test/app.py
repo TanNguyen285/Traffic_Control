@@ -23,7 +23,7 @@ from yolov26 import Yolo_AI          # Wrapper xử lý logic nhận diện đ�
 from uart_service import UART_config # Dịch vụ gửi/nhận dữ liệu qua cổng Serial (RS232/TTL)
 from tienxulyanh import Tienxulyanh  # Các hàm chuẩn hóa kích thước/màu sắc ảnh
 from SimpleCNN.custom import SimpleCNN # Cấu trúc mạng Neural phân loại kẹt xe
-from logic_2 import TrafficLogic      # "Bộ não" điều phối toàn bộ luồng xử lý AI
+from logic_test_noesp32 import TrafficLogic      # "Bộ não" điều phối toàn bộ luồng xử lý AI
 from cnn import Simple_CNN_config   # Wrapper xử lý logic dự đoán trạng thái từ CNN
 from ethernet import EthernetService # Dịch vụ giao tiếp giữa 2 trạm qua Ethernet (TCP/IP)
 app = Flask(__name__)
