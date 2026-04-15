@@ -1,5 +1,7 @@
 # 🚦 Traffic Control System  
 ## Edge AI-based Solution for Real-Time Traffic Management on Raspberry Pi 5
+<img width="1248" height="884" alt="image" src="https://github.com/user-attachments/assets/abde69f0-382a-43bd-88bd-e903f0576164" />
+
 
 ---
 
