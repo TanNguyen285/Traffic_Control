@@ -1,6 +1,6 @@
 <mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.6.1 Chrome/142.0.7444.265 Electron/39.8.0 Safari/537.36" version="29.6.1">
   <diagram name="Trang-1" id="UiNCU68queD6RXmzAg_1">
-    <mxGraphModel dx="6170" dy="1853" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0" adaptiveColors="auto">
+    <mxGraphModel dx="5069" dy="1059" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0" adaptiveColors="auto">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -2414,7 +2414,7 @@
           <mxGeometry height="80" width="120" x="390" y="310" as="geometry" />
         </mxCell>
         <mxCell id="IXqNZCJMcrDjKVsffEtJ-245" collapsed="1" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#ffff88;strokeColor=#36393d;startSize=50;" value="&lt;span style=&quot;font-size: 28px;&quot;&gt;Simple_CNN&lt;/span&gt;" vertex="1">
-          <mxGeometry height="50" width="190" x="1981" y="480" as="geometry">
+          <mxGeometry height="50" width="190" x="1744" y="731.12" as="geometry">
             <mxRectangle height="330" width="390" x="2930" y="81" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
@@ -2448,7 +2448,7 @@
           </mxGeometry>
         </mxCell>
         <mxCell id="IXqNZCJMcrDjKVsffEtJ-255" collapsed="1" parent="1" style="swimlane;whiteSpace=wrap;html=1;fillColor=#cdeb8b;strokeColor=#36393d;startSize=50;" value="&lt;span style=&quot;font-size: 28px;&quot;&gt;Yolov26n&lt;/span&gt;" vertex="1">
-          <mxGeometry height="50" width="190" x="1981" y="560" as="geometry">
+          <mxGeometry height="50" width="190" x="1744" y="810" as="geometry">
             <mxRectangle height="330" width="390" x="2930" y="421" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
