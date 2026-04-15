@@ -1,0 +1,23 @@
+description: Ultralytics YOLO26n model trained on data_train/dataset.yaml
+author: Ultralytics
+date: '2026-04-10T01:15:25.129359'
+version: 8.4.21
+license: AGPL-3.0 License (https://ultralytics.com/license)
+docs: https://docs.ultralytics.com
+stride: 32
+task: detect
+batch: 1
+imgsz:
+- 640
+- 640
+names:
+  0: car
+  1: van
+  2: motorcycle
+  3: truck
+  4: bus
+args:
+  batch: 1
+  half: false
+channels: 3
+end2end: false

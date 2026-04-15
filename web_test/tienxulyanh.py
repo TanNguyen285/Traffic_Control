@@ -10,7 +10,7 @@ class Tienxulyanh:
     def __init__(self, sci_path, target_size=(640, 640), use_sci=True, polygon_pts=None):
         self.target_size = target_size
         self.use_sci = use_sci
-        self.device = torch.device('cpu')
+        self.device = torch.device('cpu')#pi
         self.transform = transforms.ToTensor()
         
         # Khởi tạo bộ quản lý ROI
@@ -24,11 +24,11 @@ class Tienxulyanh:
                 print(f"✅ SCI Loaded")
             except:
                 self.use_sci = False
-
+# tính giá trị ánh sáng để kích hoạt SCI nếu cần
     def ttanhsang(self, frame):
         hsv_v = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)[:, :, 2]
         return np.mean(hsv_v) / 255.0
-
+# Áp dụng SCI nếu độ sáng thấp và chuẩn bị ảnh cho YOLO và CNN
     def module_sci(self, frame):
         try:
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -39,34 +39,33 @@ class Tienxulyanh:
             enhanced = r[0].permute(1, 2, 0).cpu().numpy()
             enhanced = (np.clip(enhanced, 0, 1) * 255).astype(np.uint8)
             return cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR)
-        except: return frame
-
+        except: return frame # Nếu có lỗi gì đó thì trả về ảnh gốc (không bị crash)
+# Chuẩn bị ảnh cho YOLO và CNN, đồng thời tạo ảnh hiển thị lên Web/UI
     def input_yolo_cnn(self, frame, skip_roi=False, debug=True):
         if frame is None: return None, None, 0.0
 
-        # 1. Xử lý ROI qua ROIManager
+        # --- LUỒNG CHO AI (Vẫn giữ che đen để AI chạy chuẩn) ---
         if not skip_roi:
-            frame_roi = self.roi_manager.apply_roi(frame)
+            frame_ai = self.roi_manager.apply_roi(frame) # Che đen vùng ngoài
         else:
-            frame_roi = frame
+            frame_ai = frame.copy()
 
-        # 2. Tính độ sáng & SCI
-        self.brightness = self.ttanhsang(frame_roi)
+        # Tính độ sáng và SCI
+        self.brightness = self.ttanhsang(frame_ai)
         if self.use_sci and self.brightness < 0.2:
-            frame_roi = self.module_sci(frame_roi)
+            frame_ai = self.module_sci(frame_ai)
 
-        # 3. Tạo ảnh cho CNN (224x224)
-        frame_cnn = cv2.resize(frame_roi, (224, 224), interpolation=cv2.INTER_LINEAR)
+        # 1. Ảnh cho CNN (Dùng ảnh đã che đen, size nhỏ)
+        frame_cnn = cv2.resize(frame_ai, (224, 224))
 
-        # 4. Tạo ảnh cho YOLO (640x640)
-        frame_yolo = self.letterbox(frame_roi, self.target_size)
-        
-        # Nếu muốn thấy vùng ROI xanh xanh trên Web thì vẽ đè lên
-        if debug and not skip_roi:
-            frame_yolo = self.roi_manager.draw_visual_roi(frame_yolo)
+        # 2. Ảnh cho YOLO & Hiển thị Web (Dùng ảnh sạch hoàn toàn)
+        # Thay vì vẽ vùng xanh, ta dùng thẳng frame_ai hoặc frame gốc tùy bạn
+        frame_display = frame_ai 
+
+        # Tạo ảnh cuối cùng (Đóng khung 640x640)
+        frame_yolo = self.letterbox(frame_display, self.target_size)
 
         return frame_cnn, frame_yolo, self.brightness
-
     def letterbox(self, img, new_shape=(640, 640), color=(114, 114, 114)):
         # (Giữ nguyên hàm letterbox cũ của bạn)
         shape = img.shape[:2]

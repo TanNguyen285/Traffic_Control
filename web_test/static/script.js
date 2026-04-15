@@ -1,108 +1,129 @@
-// DOM Elements
+/**
+ * TRAFFIC CONTROL SYSTEM - REALTIME SSE VERSION
+ */
+
 const originalImg = document.getElementById("anhgoc");
 const processedImg = document.getElementById("sauxuly");
 const cameraCaptureBtn = document.getElementById("cameraCaptureBtn");
 const loading = document.getElementById("loading");
 const errorMessage = document.getElementById("errorMessage");
-
-// UI Functions
-function uiStart() {
-    loading.style.display = "block";
-    cameraCaptureBtn.disabled = true;
-    cameraCaptureBtn.style.opacity = "0.7";
-}
-
-function uiEnd() {
-    loading.style.display = "none";
-    cameraCaptureBtn.disabled = false;
-    cameraCaptureBtn.style.opacity = "1";
-}
+const modeStatus = document.getElementById("mode");
 
 function showError(msg) {
+    if (!errorMessage) return;
     errorMessage.textContent = msg;
     errorMessage.style.display = msg ? "block" : "none";
 }
 
-// Update Functions
-function updateDensity(count) {
-    const total = document.getElementById("tongxe");
-    const level = document.getElementById("mode");
-    if (!total || !level) return;
+function capnhat_trangthai(cmd) {
+    if (!modeStatus) return;
+    let text = "";
+    let className = "";
 
-    total.textContent = count;
-    if (count < 5) level.textContent = "🟢 Ít";
-    else if (count <= 10) level.textContent = "🟡 Trung bình";
-    else if (count <= 15) level.textContent = "🟠 Khá";
-    else level.textContent = "🔴 Đông";
+    switch (cmd) {
+        case "A": case "B":
+            text = "🔴 ĐÔNG (Ưu tiên xanh)";
+            className = "status-heavy"; break;
+        case "m2":
+            text = "⚪ XẢ TRẠM (Khẩn cấp)";
+            className = "status-emergency"; break;
+        case "m1":
+            text = "🟢 THÔNG THOÁNG";
+            className = "status-low"; break;
+        case "m3":
+            text = "🟡 TRUNG BÌNH";
+            className = "status-medium"; break;
+        case "m4":
+            text = "🟠 KHÁ ĐÔNG";
+            className = "status-high"; break;
+        default:
+            text = "🔵 ĐANG ĐỢI DỮ LIỆU...";
+            className = "";
+    }
+    modeStatus.textContent = text;
+    modeStatus.className = className;
 }
 
 function time_light(g, y, r) {
     const gt = document.getElementById("greenTime");
     const yt = document.getElementById("yellowTime");
     const rt = document.getElementById("redTime");
-    
     if(gt) gt.textContent = `${g}s`;
     if(yt) yt.textContent = `${y}s`;
     if(rt) rt.textContent = `${r}s`;
 }
 
-// Logic xử lý dữ liệu trả về từ API
+/**
+ * HÀM HIỂN THỊ CHÍNH
+ */
 function xulyKetQua(data) {
-    // 1. Cập nhật số lượng từng loại xe
+    if (!data) return;
+
+    // 1. Cập nhật số xe
     if (Array.isArray(data.counts)) {
         let totalCount = 0;
-        data.counts.forEach((c, i) => {
+        data.counts.forEach((count, i) => {
             const el = document.getElementById(`count-${i}`);
-            if (el) el.textContent = c;
-            totalCount += c;
+            if (el) el.textContent = count;
+            totalCount += count;
         });
-        updateDensity(totalCount);
+        const totalEl = document.getElementById("tongxe");
+        if (totalEl) totalEl.textContent = data.xe_local || totalCount;
     }
 
-    // 2. Hiển thị ảnh gốc đã chụp
+    // 2. Cập nhật CMD & Trạng thái
+    if (data.final_cmd) capnhat_trangthai(data.final_cmd);
+
+    // 3. Hiển thị Ảnh (Base64)
     if (data.input_image) {
         originalImg.src = data.input_image;
-        originalImg.classList.add("active");
+        originalImg.style.display = "block";
     }
-
-    // 3. Hiển thị ảnh đã qua YOLO xử lý
     if (data.yolo_image) {
         processedImg.src = data.yolo_image;
-        processedImg.classList.add("active");
+        processedImg.style.display = "block";
     }
 
-    // 4. Cập nhật thời gian đèn
-    const yellow = data.yellow_seconds ?? 3;
-    const red = data.total_seconds ?? data.red_seconds ?? 0;
-    const green = data.green_seconds ?? Math.max(0, red - yellow);
+    // 4. Thời gian đèn
+    const yellow = data.yellow_seconds || 3;
+    const green = data.green_seconds || 30;
+    const red = data.red_seconds || (green + yellow);
     time_light(green, yellow, red);
+
+    // 5. Ánh sáng
+    const brightnessEl = document.getElementById("brightness_val");
+    if(brightnessEl) brightnessEl.textContent = data.brightness || "0";
     
     showError("");
 }
 
-// Gọi API Capture
-async function chupVaPhanTich() {
-    uiStart();
-    showError("");
-    try {
-        const res = await fetch(`/camera_capture`, { method: "POST" });
-        if (!res.ok) throw new Error("Lỗi kết nối server.");
-        
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-        
-        xulyKetQua(data);
-    } catch (err) {
-        showError(err.message);
-    } finally {
-        uiEnd();
-    }
+/**
+ * THIẾT LẬP KẾT NỐI REALTIME (SSE)
+ */
+function connectRealtime() {
+    console.log("Đang kết nối luồng dữ liệu Realtime...");
+    
+    // Mở đường ống nhận dữ liệu từ Server
+    const eventSource = new EventSource("/stream_results");
+
+    eventSource.onmessage = function(event) {
+        try {
+            const data = JSON.parse(event.data);
+            console.log("Đã nhận kết quả AI mới tự động!");
+            xulyKetQua(data);
+        } catch (err) {
+            console.error("Lỗi giải mã dữ liệu SSE:", err);
+        }
+    };
+
+    eventSource.onerror = function(err) {
+        console.warn("Mất kết nối SSE. Đang thử kết nối lại sau 5s...");
+        eventSource.close();
+        setTimeout(connectRealtime, 5000); // Thử kết nối lại nếu rớt mạng
+    };
 }
 
-// Event Listeners
-cameraCaptureBtn.addEventListener("click", chupVaPhanTich);
-
-// Tự động kiểm tra trạng thái camera khi trang load (nếu cần)
+// Khởi chạy kết nối khi trang web load xong
 window.addEventListener("DOMContentLoaded", () => {
-    console.log("Hệ thống YOLOv26 đã sẵn sàng.");
+    connectRealtime();
 });

@@ -84,10 +84,4 @@ if __name__ == "__main__":
     # Tính toán tổng số tham số
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Tổng số tham số: {total_params / 1e6:.3f} M")
-    
-    # Chạy thử với ảnh đầu vào 160x160 (kích thước tối ưu cho mô hình nhẹ)
-    test_input = torch.randn(1, 3, 160, 160)
-    output = model(test_input)
-    
-    print(f"Kích thước tensor đầu ra: {output.shape}") 
     print("Mô hình đã chạy thành công!")

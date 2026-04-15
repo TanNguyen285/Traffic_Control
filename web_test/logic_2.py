@@ -115,7 +115,6 @@ class TrafficLogic:
             # import time; time.sleep(0.1)
 
         # 3. KHI THOÁT KHỎI VÒNG LẶP (Có 2 trường hợp: Hết kẹt hoặc bị ép bởi run1)
-        
         # Nếu thoát do run1 (Xả trạm)
         if self.bien_run1:
             self.bien_run1 = False
@@ -153,7 +152,7 @@ class TrafficLogic:
         self.uart.send(cmd_final)
 
         # 6. TRẢ KẾT QUẢ HIỂN THỊ
-        result = self._dong_goi_ket_qua_hien_thi(remote_connected, ket_remote, xe_remote, cmd_final)
+        result = self.result_AI(remote_connected, ket_remote, xe_remote, cmd_final)
         return result, cmd_final
     # ==========================================
     # KHỐI LOGIC XỬ LÝ (Đã sửa để chạy độc lập)

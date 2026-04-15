@@ -37,20 +37,27 @@ class EthernetService:
                 time.sleep(2) # Đợi 2s rồi thử kết nối lại
 
     def _receive_loop(self):
-        while self.running and self.conn:
-            try:
-                data = self.conn.recv(1024).decode('utf-8')
-                if not data: break
-                self.remote_data = json.loads(data)
-            except:
-                break
-        self.conn = None
+            buffer = ""
+            while self.running and self.conn:
+                try:
+                    chunk = self.conn.recv(1024).decode('utf-8')
+                    if not chunk: break
+                    buffer += chunk
+                    
+                    # Tìm ký tự xuống dòng để tách gói tin JSON
+                    while "\n" in buffer:
+                        line, buffer = buffer.split("\n", 1)
+                        if line.strip():
+                            self.remote_data = json.loads(line)
+                except:
+                    break
+            self.conn = None
 
     def send_data(self, is_jam, xe_count):
-        """Gửi trạng thái hiện tại sang máy đối diện"""
         if self.conn:
             try:
-                payload = json.dumps({'ket': is_jam, 'xe': xe_count})
+                # Thêm \n ở cuối gói tin
+                payload = json.dumps({'ket': is_jam, 'xe': xe_count}) + "\n"
                 self.conn.sendall(payload.encode('utf-8'))
             except:
                 self.conn = None
