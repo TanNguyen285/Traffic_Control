@@ -1,0 +1,37 @@
+{
+    "SCI": {
+        "latency_ms": 1.14,
+        "fps": 878.06,
+        "input_size": "(640, 640)",
+        "device": "cuda",
+        "timestamp": "2026-04-14 23:27:15"
+    },
+    "Yolo_NCNN": {
+        "latency_ms": 45.2,
+        "fps": 22.12,
+        "input_size": "(640, 640)",
+        "device": "cuda",
+        "timestamp": "2026-04-17 19:47:08"
+    },
+    "SimpleCNN": {
+        "latency_ms": 1.48,
+        "fps": 673.48,
+        "input_size": "(224, 224)",
+        "device": "cuda",
+        "timestamp": "2026-04-17 19:49:41"
+    },
+    "SCI+SimpleCNN": {
+        "latency_ms": 2.52,
+        "fps": 396.1,
+        "input_size": "(480->Input)",
+        "device": "cuda",
+        "timestamp": "2026-04-17 19:51:50"
+    },
+    "SCI+Yolo_NCNN": {
+        "latency_ms": 28.94,
+        "fps": 34.55,
+        "input_size": "(480->Input)",
+        "device": "cuda",
+        "timestamp": "2026-04-17 19:52:02"
+    }
+}

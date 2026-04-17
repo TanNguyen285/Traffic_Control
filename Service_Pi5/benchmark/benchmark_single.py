@@ -33,20 +33,20 @@ def run_single(relative_path, label):
     # 1. Nhận diện SCI
     if "sci" in p or "difficult" in p:
         model = Finetunemodel(weights=full_path).to(tester.device).eval()
-        m_type, size = "SCI", (640, 640)
+        m_type, size = "SCI", (480, 480)
     
     # 2. Nhận diện SimpleCNN (.pth)
     elif p.endswith(".pth"):
         model = SimpleCNN(num_classes=2).to(tester.device)
         model.load_state_dict(torch.load(full_path, map_location=tester.device))
         model.eval()
-        m_type, size = "CNN", (160, 160)
+        m_type, size = "CNN", (224, 224)
     
     # 3. Nhận diện YOLO (Cả .pt và folder ncnn)
     else:
         # YOLO tự động hiểu nếu đưa vào path folder chứa ncnn hoặc file .pt
         model = YOLO(full_path)
-        m_type, size = "YOLO", (640, 640)
+        m_type, size = "YOLO", (480, 480)
 
     print(f"[*] Đang test: {label} ({m_type})...")
     
@@ -73,12 +73,9 @@ def run_single(relative_path, label):
 
 if __name__ == "__main__":
     # CHẠY ĐƠN LẺ TỪNG THẰNG
-    run_single("web_test/weights/difficult.pt", "SCI")
-    
-    # Test YOLO .pt chuẩn
-    #run_single("runs/detect/yolov26_epoch50/weights/best.pt", "Yolo_PT")
-    
+    #run_single("web_test/weights/difficult.pt", "SCI")
+
     # Test YOLO NCNN (Đưa đường dẫn đến cái FOLDER chứa các file ncnn)
-    #run_single("runs/detect/best_ncnn_model", "Yolo_NCNN")
+     run_single("runs/detect/best_ncnn_model", "Yolo_NCNN")
     
-    # run_single("runs/exp3/best_cnn_model.pth", "SimpleCNN")
+    #run_single("runs/exp3/best_cnn_model.pth", "SimpleCNN")

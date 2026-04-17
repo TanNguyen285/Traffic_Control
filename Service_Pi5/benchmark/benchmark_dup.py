@@ -56,7 +56,7 @@ def run_combined_test(sci_rel_path, model_rel_path, label, mode="YOLO"):
         other_model.load_state_dict(torch.load(mod_full, map_location=tester.device))
         other_model.eval()
 
-    dummy = torch.randn(1, 3, 640, 640).to(tester.device)
+    dummy = torch.randn(1, 3, 480, 480).to(tester.device)
     times = []
 
     with torch.no_grad():
@@ -84,23 +84,19 @@ def run_combined_test(sci_rel_path, model_rel_path, label, mode="YOLO"):
                 other_model.predict(img, verbose=False)
             else:
                 # Resize cho CNN
-                input_cnn = torch.nn.functional.interpolate(r, size=(160, 160))
+                input_cnn = torch.nn.functional.interpolate(r, size=(224, 224))
                 other_model(input_cnn)
             
             if tester.device == "cuda": torch.cuda.synchronize()
             times.append((time.time() - t0) * 1000)
 
     avg = np.mean(times)
-    tester.save_to_json(label, avg, 1000/avg, "(640->Input)")
+    tester.save_to_json(label, avg, 1000/avg, "(480->Input)")
 
 if __name__ == "__main__":
     # --- CHẠY CÁC CASE KẾT HỢP ---
-    
-    # 1. SCI + YOLO (.pt)
-    #run_combined_test(SCI_P, YOLO_PT_P, "SCI+Yolo_PT", mode="YOLO")
-    
     # 2. SCI + YOLO (NCNN)
-    #run_combined_test(SCI_P, YOLO_NCNN_P, "SCI+Yolo_NCNN", mode="YOLO")
+    run_combined_test(SCI_P, YOLO_NCNN_P, "SCI+Yolo_NCNN", mode="YOLO")
     
     # 3. SCI + SimpleCNN
-    run_combined_test(SCI_P, CNN_P, "SCI+SimpleCNN", mode="CNN")
+    #run_combined_test(SCI_P, CNN_P, "SCI+SimpleCNN", mode="CNN")

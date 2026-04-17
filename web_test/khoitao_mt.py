@@ -3,7 +3,7 @@ import torch
 from ultralytics import YOLO
 from torchvision import transforms
 from SimpleCNN.custom import SimpleCNN
-
+import socket
 # Import các Class của bạn
 from camera import Camera
 from yolov26 import Yolo_AI
@@ -29,11 +29,23 @@ class Config:
     ]
 
 def init_system():
+    # Tự động nhận diện hostname để gán station_id và peer_ip
+    hostname = socket.gethostname().lower()
+    
+    if 'trama' in hostname:
+        s_id = 'Tram_A'
+        p_id = 'trama.local'
+    else:
+        s_id = 'Tram_B'
+        p_id = 'trama.local'
+
     # 1. Hardware
-    cam = Camera(src=0) # src=0 là webcam laptop, src=1 là camera USB
+    cam = Camera(src=0) 
     cam.start()
     uart = UART_config(port="/dev/ttyAMA0", baudrate=115200)
-    eth_service = EthernetService(station_id='Tram_A', peer_ip='192.168.1.100')
+    
+    # Dùng đúng tên biến peer_ip của ông, nhưng truyền vào hostname .local
+    eth_service = EthernetService(station_id=s_id, peer_ip=p_id)
 
     # 2.1 Khởi tạo ROIManager để vẽ hiển thị
     ROI_lane = ROIManager(polygon_pts=Config.ROI)
@@ -68,7 +80,7 @@ def init_system():
         device=Config.DEVICE
     )
 
-    # 5. Traffic Engine (Bộ não)
+    # 5. Traffic Engine (Dùng biến s_id đã tự động nhận diện)
     engine = TrafficLogic(
         yolo_ai=ai_yolo, 
         cnn_service=cnn_service, 
@@ -76,12 +88,12 @@ def init_system():
         uart=uart, 
         cam=cam,
         eth_service=eth_service,
-        station_id='Tram_A',
+        station_id=s_id, # Truyền s_id vào đây
     )
-    engine.auto_mode = True          # Bật chế độ tự sinh trigger
-    engine.INTERVAL_RUN = 10         # Cứ 10s tự quét AI 1 lần
-    engine.INTERVAL_RUN1 = 60        # Cứ 1 phút tự xả trạm 1 lần
+    engine.auto_mode = True          
+    engine.INTERVAL_RUN = 10         
+    engine.INTERVAL_RUN1 = 60        
     # Đăng ký callback cho UART
     uart.start_listening(engine.uart_esp32_rasp)
 
-    return engine, cam, Config ,ROI_lane
+    return engine, cam, Config, ROI_lane

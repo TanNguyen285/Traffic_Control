@@ -4,37 +4,48 @@ import threading
 import time
 
 class EthernetService:
-    def __init__(self, station_id, peer_ip, port=8000):
+    def __init__(self, station_id, peer_hostname, port=8000):
         self.station_id = station_id.upper()
-        self.peer_ip = peer_ip
+        # Đổi tên biến từ peer_ip thành peer_hostname cho đúng bản chất
+        self.peer_hostname = peer_hostname 
         self.port = port
         self.remote_data = {'ket': False, 'xe': 0}
         self.conn = None
         self.running = True
         
-        # Chạy luồng kết nối ngầm
         threading.Thread(target=self.ketnoiethernet, daemon=True).start()
 
     def ketnoiethernet(self):
         while self.running:
             try:
-                if self.station_id == 'A':
-                    # Trạm A làm Server
+                if self.station_id == 'Tram_A':
+                    # Trạm A làm Server: Giữ nguyên 0.0.0.0 để nhận mọi kết nối
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                         s.bind(('0.0.0.0', self.port))
                         s.listen(1)
+                        print(f"Trạm A đang chờ kết nối tại cổng {self.port}...")
                         self.conn, addr = s.accept()
+                        print(f"Đã kết nối với: {addr}")
                         self._receive_loop()
                 else:
-                    # Trạm B làm Client
+                    # Trạm B làm Client: Dịch hostname thành IP trước khi gọi connect
                     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-                        s.connect((self.peer_ip, self.port))
-                        self.conn = s
-                        self._receive_loop()
+                        try:
+                            # Tự động dịch 'trama.local' thành IP thực tế
+                            real_ip = socket.gethostbyname(self.peer_hostname)
+                            print(f"Đang kết nối tới {self.peer_hostname} ({real_ip})...")
+                            s.connect((real_ip, self.port))
+                            self.conn = s
+                            self._receive_loop()
+                        except socket.gaierror:
+                            print(f"Lỗi: Không tìm thấy máy {self.peer_hostname}. Đang thử lại...")
+                            time.sleep(2)
+                            continue
             except Exception as e:
+                print(f"Lỗi kết nối: {e}")
                 self.conn = None
-                time.sleep(2) # Đợi 2s rồi thử kết nối lại
+                time.sleep(2)
 
     def _receive_loop(self):
             buffer = ""

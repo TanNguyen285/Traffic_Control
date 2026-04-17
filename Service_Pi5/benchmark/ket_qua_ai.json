@@ -1,9 +1,0 @@
-{
-    "SCI": {
-        "latency_ms": 1.14,
-        "fps": 878.06,
-        "input_size": "(640, 640)",
-        "device": "cuda",
-        "timestamp": "2026-04-14 23:27:15"
-    }
-}

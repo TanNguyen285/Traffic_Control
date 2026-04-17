@@ -42,7 +42,6 @@ cd Traffic_Control-main
 #===================Venv (môi trường ảo)==========================
 #=================================================================
 
-cd /path/to/your/project
 python3.10 -m venv yolo
 source yolo/bin/activate
 
