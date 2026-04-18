@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YOLOv8 Object Detection</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body>
+
+    <header class="header">
+        <div class="header-content header-wide">
+            <h1 class="title">🔍 YOLOv26 Object Detection</h1>
+            <div class="status-panel">
+                <div style="opacity:0.85;color:#99aabb;font-size:0.95em">Dual-Stream · Tích hợp</div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container container-wide">
+        <div class="main-content">
+            <section class="dashboard-two-col" aria-label="Giám sát hai nhánh và sơ đồ">
+
+                <div class="dashboard-column-left" id="columnBranchesIntegrated">
+                    <article class="integrated-container card-modern" id="integratedBranchA">
+                        <header class="integrated-header integrated-header-title-only">
+                            <h3 class="integrated-title" id="titleBranchA">Nhánh A</h3>
+                        </header>
+
+                        <div class="live-box" id="frameLiveStreamA">
+                            <span class="frame-label" id="labelLiveA">Live</span>
+                            <img
+                                id="cameraPreview1"
+                                class="stream-media"
+                                src=""
+                                alt="Live Stream Nhánh A"
+                                loading="eager"
+                                decoding="async"
+                            >
+                        </div>
+
+                        <button type="button" class="btn-toggle-branch-results" id="btnToggleResultsA" aria-expanded="false" aria-controls="resultCollapsibleA">
+                            <span class="btn-toggle-icon">+</span> Xem kết quả
+                        </button>
+
+                        <div class="result-collapsible" id="resultCollapsibleA" aria-hidden="true">
+                            <div class="result-collapsible-inner">
+                                <div class="processed-box" id="frameProcessedA">
+                                    <span class="frame-label" id="labelProcessedA">Ảnh sau xử lý</span>
+                                    <img
+                                        id="processedImg1"
+                                        src=""
+                                        alt="Ảnh sau xử lý A"
+                                        class="stream-media result-image"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+
+                                <p class="branch-total-line" id="lineTotalA">Tổng xe: <span id="totalVehicles1">0</span></p>
+
+                                <div class="traffic-light-panel branch-traffic compact-traffic" id="panelTrafficA">
+                                    <div class="section-title-traffic">🚦 Đèn giao thông · A</div>
+                                    <div class="traffic-light-row">
+                                        <div class="traffic-dot" id="statusGreen1" title="Xanh">
+                                            <span class="light green"></span>
+                                        </div>
+                                        <div class="traffic-dot" id="statusYellow1" title="Vàng">
+                                            <span class="light yellow"></span>
+                                        </div>
+                                        <div class="traffic-dot" id="statusRed1" title="Đỏ">
+                                            <span class="light red"></span>
+                                        </div>
+                                    </div>
+                                    <div class="light-times-row">
+                                        <span id="greenTime1">0s</span>
+                                        <span id="yellowTime1">0s</span>
+                                        <span id="redTime1">0s</span>
+                                    </div>
+                                </div>
+
+                                <div class="counts-section branch-counts" id="panelCountsA">
+                                    <h4 class="counts-heading">Số lượng theo loại</h4>
+                                    <div class="counts-grid counts-five" id="countsGrid1">
+                                        <div class="count-box"><div class="count-value" id="count-1-bus" data-class-name="bus">0</div><div class="count-label">Bus</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-1-van" data-class-name="van">0</div><div class="count-label">Van</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-1-truck" data-class-name="truck">0</div><div class="count-label">Truck</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-1-motorcycle" data-class-name="motorcycle">0</div><div class="count-label">Motorcycle</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-1-car" data-class-name="car">0</div><div class="count-label">Car</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="integrated-container card-modern" id="integratedBranchB">
+                        <header class="integrated-header integrated-header-title-only">
+                            <h3 class="integrated-title" id="titleBranchB">Nhánh B</h3>
+                        </header>
+
+                        <div class="live-box" id="frameLiveStreamB">
+                            <span class="frame-label" id="labelLiveB">Live</span>
+                            <img
+                                id="cameraPreview2"
+                                class="stream-media"
+                                src=""
+                                alt="Live Stream Nhánh B"
+                                loading="eager"
+                                decoding="async"
+                            >
+                        </div>
+
+                        <button type="button" class="btn-toggle-branch-results" id="btnToggleResultsB" aria-expanded="false" aria-controls="resultCollapsibleB">
+                            <span class="btn-toggle-icon">+</span> Xem kết quả
+                        </button>
+
+                        <div class="result-collapsible" id="resultCollapsibleB" aria-hidden="true">
+                            <div class="result-collapsible-inner">
+                                <div class="processed-box" id="frameProcessedB">
+                                    <span class="frame-label" id="labelProcessedB">Ảnh sau xử lý</span>
+                                    <img
+                                        id="processedImg2"
+                                        src=""
+                                        alt="Ảnh sau xử lý B"
+                                        class="stream-media result-image"
+                                        loading="lazy"
+                                        decoding="async"
+                                    >
+                                </div>
+
+                                <p class="branch-total-line" id="lineTotalB">Tổng xe: <span id="totalVehicles2">0</span></p>
+
+                                <div class="traffic-light-panel branch-traffic compact-traffic" id="panelTrafficB">
+                                    <div class="section-title-traffic">🚦 Đèn giao thông · B</div>
+                                    <div class="traffic-light-row">
+                                        <div class="traffic-dot" id="statusGreen2" title="Xanh">
+                                            <span class="light green"></span>
+                                        </div>
+                                        <div class="traffic-dot" id="statusYellow2" title="Vàng">
+                                            <span class="light yellow"></span>
+                                        </div>
+                                        <div class="traffic-dot" id="statusRed2" title="Đỏ">
+                                            <span class="light red"></span>
+                                        </div>
+                                    </div>
+                                    <div class="light-times-row">
+                                        <span id="greenTime2">0s</span>
+                                        <span id="yellowTime2">0s</span>
+                                        <span id="redTime2">0s</span>
+                                    </div>
+                                </div>
+
+                                <div class="counts-section branch-counts" id="panelCountsB">
+                                    <h4 class="counts-heading">Số lượng theo loại</h4>
+                                    <div class="counts-grid counts-five" id="countsGrid2">
+                                        <div class="count-box"><div class="count-value" id="count-2-bus" data-class-name="bus">0</div><div class="count-label">Bus</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-2-van" data-class-name="van">0</div><div class="count-label">Van</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-2-truck" data-class-name="truck">0</div><div class="count-label">Truck</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-2-motorcycle" data-class-name="motorcycle">0</div><div class="count-label">Motorcycle</div></div>
+                                        <div class="count-box"><div class="count-value" id="count-2-car" data-class-name="car">0</div><div class="count-label">Car</div></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="dashboard-column-right column-right-stretch" id="columnControlAndDiagram">
+                    <div class="input-control-panel card-modern input-panel-compact" id="inputControlPanel">
+                        <h3 class="input-panel-heading" id="headingInputPanel">Input Control</h3>
+                        <form class="control-form control-form-compact" id="formStaticDetect" onsubmit="return false;">
+                            <div class="form-row-compact" id="rowStaticFile">
+                                <label class="form-label-static" for="inputStaticImageFile">Ảnh tĩnh</label>
+                                <input type="file" id="inputStaticImageFile" name="static_image" class="file-input file-input-compact" accept="image/*">
+                            </div>
+                            <div class="form-row-compact" id="rowDetectBranch">
+                                <label class="form-label-static" for="selectDetectTargetBranch">Nhánh</label>
+                                <select id="selectDetectTargetBranch" name="target_branch" class="branch-select branch-select-compact">
+                                    <option value="1">Nhánh A</option>
+                                    <option value="2">Nhánh B</option>
+                                </select>
+                            </div>
+                            <div class="form-actions-compact" id="rowDetectActions">
+                                <button type="button" class="btn-primary btn-compact" id="btnDetectStaticImage">Detect Ảnh Tĩnh</button>
+                            </div>
+                            <p class="file-name file-name-compact" id="textStaticFileName">Chưa chọn file</p>
+                        </form>
+                    </div>
+
+                    <div class="intersection-diagram card-modern intersection-v2-wrap intersection-panel-fill" id="panelIntersectionDiagram">
+                        <h3 class="panel-title" id="headingIntersection">Sơ đồ mô phỏng giao lộ</h3>
+                        <p class="diagram-legend" id="textDiagramLegend">TRAM_A (ngang) · TRAM_B (dọc) · Đèn đồng bộ A / B</p>
+
+                        <div class="intersection-diagram-body" id="intersectionDiagramBody">
+                            <div class="intersection-v2 intersection-v2-large intersection-v2-fill" id="intersectionCanvas" role="img" aria-label="Giao lộ TRAM_A và TRAM_B">
+                                <div class="intersection-grid-bg">
+                                    <div class="tram-road tram-road-a">
+                                        <div class="road-surface road-h"></div>
+                                        <div class="lane-line lane-line-h lane-line-h-top"></div>
+                                        <div class="lane-line lane-line-h lane-line-h-bottom"></div>
+                                        <div class="lane-center lane-center-h"></div>
+                                    </div>
+                                    <div class="tram-road tram-road-b">
+                                        <div class="road-surface road-v"></div>
+                                        <div class="lane-line lane-line-v lane-line-v-left"></div>
+                                        <div class="lane-line lane-line-v lane-line-v-right"></div>
+                                        <div class="lane-center lane-center-v"></div>
+                                    </div>
+                                    <div class="zebra-cross zebra-nw" aria-hidden="true"></div>
+                                    <div class="zebra-cross zebra-ne" aria-hidden="true"></div>
+                                    <div class="zebra-cross zebra-sw" aria-hidden="true"></div>
+                                    <div class="zebra-cross zebra-se" aria-hidden="true"></div>
+                                    <div class="intersection-core"></div>
+                                </div>
+
+                                <span class="tram-badge tram-badge-a">TRAM_A</span>
+                                <span class="tram-badge tram-badge-b">TRAM_B</span>
+
+                                <div class="virtual-light-post vlp-a" id="diagramPostA">
+                                    <span class="diagram-bulb green" data-bulb="green"></span>
+                                    <span class="diagram-bulb yellow" data-bulb="yellow"></span>
+                                    <span class="diagram-bulb red" data-bulb="red"></span>
+                                    <span class="vlp-caption">A</span>
+                                </div>
+                                <div class="virtual-light-post vlp-b" id="diagramPostB">
+                                    <span class="diagram-bulb green" data-bulb="green"></span>
+                                    <span class="diagram-bulb yellow" data-bulb="yellow"></span>
+                                    <span class="diagram-bulb red" data-bulb="red"></span>
+                                    <span class="vlp-caption">B</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <div id="errorMessage" class="error-message"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>YOLOv8 Detection Engine • Powered by Ultralytics</p>
+    </footer>
+
+    <script src="static/script.js"></script>
+</body>
+</html>
