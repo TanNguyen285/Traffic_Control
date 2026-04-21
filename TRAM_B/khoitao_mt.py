@@ -4,19 +4,21 @@ from ultralytics import YOLO
 from torchvision import transforms
 from SimpleCNN.custom import SimpleCNN
 import socket
+
 # Import các Class của bạn
 from camera import Camera
 from yolov26 import Yolo_AI
 from uart_service import UART_config
 from tienxulyanh import Tienxulyanh
 from logic_test import TrafficLogic
-from cnn import Simple_CNN_config
+from cnn_onnx import Simple_CNN_config
 from ethernet import EthernetService
 from ROI import ROIManager
 
 class Config:
     YOLO_PATH = "runs/detect/best_ncnn_model"
-    CNN_PATH = "runs/exp3/best_cnn_model.pth"
+    # CNN_PATH = "runs/exp3/best_cnn_model.pth"
+    CNN_PATH = "runs/exp3/simple_cnn.onnx"  # Đường dẫn mới cho mô hình CNN đã chuyển sang ONNX
     SCI_PATH = "web_test/weights/difficult.pt"
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
@@ -32,7 +34,7 @@ def init_system():
     h_name = socket.gethostname().lower()
     
     # --- CẤU HÌNH TẬP TRUNG TẠI ĐÂY ---
-    MY_PORT = 9999  # Ông khai báo Port ở đây cho sướng
+    MY_PORT = 9999  # Cổng mặc định cho EthernetService, có thể thay đổi nếu cần
     # ----------------------------------
 
     if h_name == 'lagct':
@@ -66,9 +68,9 @@ def init_system():
     ai_yolo = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
 
     # 4. CNN Service
-    cnn_net = SimpleCNN(num_classes=2).to(Config.DEVICE)
-    cnn_net.load_state_dict(torch.load(Config.CNN_PATH, map_location=Config.DEVICE))
-    cnn_net.eval()
+    #cnn_net = SimpleCNN(num_classes=2).to(Config.DEVICE)
+    #cnn_net.load_state_dict(torch.load(Config.CNN_PATH, map_location=Config.DEVICE))
+    #cnn_net.eval()
     
     cnn_transform = transforms.Compose([
         transforms.Resize((224, 224)),
@@ -77,10 +79,11 @@ def init_system():
     ])
     
     cnn_service = Simple_CNN_config(
-        model=cnn_net, 
-        transform=cnn_transform, 
+        #model=cnn_net, 
+        model_path=Config.CNN_PATH,
+        transform=cnn_transform,
         classes=Config.CNN_CLASSES, 
-        device=Config.DEVICE
+        #device=Config.DEVICE
     )
 
     # 5. Traffic Engine (Dùng biến s_id đã tự động nhận diện)

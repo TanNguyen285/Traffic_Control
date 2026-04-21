@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hệ thống Điều khiển Giao thông thông minh</title>
@@ -14,7 +15,7 @@
             <div class="status-panel">YOLOv26 AI Engine</div>
         </div>
     </header>
-
+<!-- main content -->
     <main class="container">
         <div class="dashboard-grid">
             
@@ -25,7 +26,7 @@
                         📷 Chụp & Phân tích hệ thống
                     </button>
                 </div>
-
+<!-- traffic light and density status -->
                 <div class="config-section">
                     <div class="traffic-light-panel">
                         <div class="section-title">Đèn Giao Thông</div>
@@ -51,18 +52,18 @@
                     </div>
                 </div>
             </div>
-
+            <!-- camera live stream -->
             <div class="right-column">
                 <div class="camera-box">
                     <div class="camera-label">
                         <span class="live-dot"></span> Camera Live Stream A
                     </div>
-                    // Sử dụng thẻ <img> để hiển thị luồng video từ Flask, đảm bảo src trỏ đến đúng endpoint cung cấp luồng video
+                    <!-- Sử dụng thẻ <img> để hiển thị luồng video từ Flask, đảm bảo src trỏ đến đúng endpoint cung cấp luồng video -->
                     <img id="cameraPreview" class="camera-video" src="/camera_stream" alt="Stream"> 
                 </div>
             </div>
         </div>
-
+        <!-- image results and counts -->
         <div class="middle-row images-grid">
             <div class="image-box">
                 <div class="image-header">
@@ -70,7 +71,7 @@
                     <span class="badge">Input</span>
                 </div>
                 <div class="img-wrapper">
-                    <img id="anhgoc" src="" class="result-image">
+            <img id="anhgoc" src="/static/current_input.jpg" class="result-image" alt="Chờ dữ liệu...">
                 </div>
             </div>
             <div class="image-box">
@@ -78,24 +79,19 @@
                     <h2>Kết Quả Phân Tích</h2>
                     <span class="badge success">YOLO Output</span>
                 </div>
-                <div class="img-wrapper">
-                    <img id="sauxuly" src="" class="result-image">
+                 <div class="img-wrapper">
+                    <img id="sauxuly" src="/static/current_yolo.jpg" class="result-image" alt="Chờ phân tích...">
                 </div>
             </div>
         </div>
+        <!-- traffic density chart -->
+        <div class="chart-section">
+    <h3 class="section-title">Biểu đồ Mật độ xe</h3>
+    <div class="chart-container" style="position: relative; height:40vh; width:100%">
+        <canvas id="chart_live"></canvas>
+    </div>
+    </div>
 
-        <div class="counts-section">
-            <h3 class="section-title">Chi tiết phân loại phương tiện</h3>
-            <div class="counts-grid" id="countsGrid">
-                {% set names = class_names or ['bus','car','motorbike','truck'] %}
-                {% for i in range(names|length) %}
-                <div class="count-box">
-                    <div class="count-value" id="count-{{ i }}">0</div>
-                    <div class="count-label">{{ names[i] }}</div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
 
         <div id="loading" class="loading-indicator">
             <div class="spinner"></div>
@@ -103,7 +99,7 @@
         </div>
         <div id="errorMessage" class="error-message"></div>
     </main>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

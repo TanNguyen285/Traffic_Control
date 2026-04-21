@@ -4,12 +4,18 @@ import atexit
 import time
 import cv2
 import threading # Thêm thư viện luồng
-from flask import Flask, render_template, jsonify, Response
+from flask import Flask, render_template, jsonify, send_from_directory, Response
+from quanly import quanly_log
 
 # Thêm path
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(CURRENT_DIR)
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__)) # Thư mục TRAM_A
+LOG_FOLDER = os.path.abspath(os.path.join(BASE_DIR, "..", "logs")) 
+
+# Kiểm tra log cho chắc chắn khi khởi động
+print(f"📂 Log folder path: {LOG_FOLDER}")
 # Import bộ khởi tạo
 from khoitao_mt import init_system
 
@@ -19,35 +25,66 @@ app = Flask(__name__)
 engine, cam, Config, ROI_lane = init_system()
 
 # ==========================================
-# LUỒNG CHẠY NGẦM TỰ ĐỘNG (ENGINE WORKER)
+# LUỒNG CHẠY Log_data_json
+# ==========================================
+@app.route('/get_log_data')
+def get_log_data():
+    # Kỹ thuật chuyên nghiệp: Trả về dữ liệu từ RAM để đạt tốc độ cao nhất
+    # json_log.data_list luôn chứa dữ liệu mới nhất mà worker vừa ghi
+    try:
+        if json_log and hasattr(json_log, 'data_list'):
+            return jsonify(json_log.data_list)
+        return jsonify([])
+    except Exception as e:
+        print(f"Lỗi lấy dữ liệu từ RAM: {e}")
+        return jsonify([])
+
+# ==========================================
+# LUỒNG CHẠY Kết quau AI (SSE)
 # ==========================================
 import json
-
 # Tạo một biến toàn cầu để lưu kết quả mới nhất
 latest_result = None
 result_ready = False
-
+# Nhận dữ liệu từ engine và cập nhật vào log, đồng thời đánh dấu đã có kết quả mới
 @app.route('/stream_results')
 def stream_results():
     def event_stream():
         global latest_result, result_ready
+        
+        # 1. Gửi lịch sử ngay khi Client vừa kết nối để nạp Chart
+        # json_log.data_list là list chứa các dict từ file logs
+        yield f"data: {json.dumps(json_log.data_list)}\n\n"
+        
         while True:
-            # Chỉ khi nào có kết quả mới (result_ready == True) thì mới gửi
             if result_ready:
+                # 2. Bắn data realtime để "kích" JS chạy hàm ảnh và đọc file JSON
                 yield f"data: {json.dumps(latest_result)}\n\n"
-                result_ready = False  # Gửi xong thì reset lại
-            time.sleep(0.1) # Nghỉ để không treo CPU
-
+                result_ready = False
+            time.sleep(0.1)
     return Response(event_stream(), mimetype="text/event-stream")
+json_log = quanly_log(log_dir="logs")
+
+# ==========================================
+# LUỒNG CHẠY NGẦM TỰ ĐỘNG (ENGINE WORKER)
+# ==========================================
 
 # Trong luồng traffic_engine_worker, bạn cập nhật biến này
 def traffic_engine_worker():
     global latest_result, result_ready
     while True:
-        res, cmd = engine.thuc_thi_AI()
-        if res and res.get("input_image"): # Có kết quả AI thực sự
-            latest_result = res
-            result_ready = True # Đánh dấu đã có "hàng" mới
+        # result_new lúc này là cái dict chứa link ảnh và số lượng xe
+        result_new, cmd = engine.thuc_thi_AI()
+
+        if result_new is not None: 
+            # Cập nhật log số liệu
+            json_log.update_storage(result_new)
+            
+            # Gán kết quả để SSE hốt đi
+            latest_result = result_new
+            result_ready = True 
+            print(f"🚀 Đã có kết quả mới: {result_new['xe_local']} xe") # Thêm dòng này để debug
+        
         time.sleep(0.3)
 
 # Chạy luồng ngay khi app khởi động

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống Điều khiển Giao thông thông minh</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-content">
+            <h1 class="title">Hệ thống Điều khiển Giao thông</h1>
+            <div class="status-panel">YOLOv26 AI Engine</div>
+        </div>
+    </header>
+<!-- main content -->
+    <main class="container">
+        <div class="dashboard-grid">
+            
+            <div class="left-column">
+                
+                <div class="control-panel action-section">
+                    <div class="mode-selector">
+                        <div class="section-title">Chế độ Hoạt động</div>
+                        <div class="mode-buttons">
+                            <button id="modeSingleBtn" type="button" class="btn-mode active" data-mode="single">
+                                🚦 Đơn (Độc lập)
+                            </button>
+                            <button id="modeBranchBtn" type="button" class="btn-mode" data-mode="branch">
+                                🔗 Nhánh (2 Trạm)
+                            </button>
+                        </div>
+                        <div class="mode-status" id="modeStatus">
+                            <span class="status-icon">●</span>
+                            <span id="modeStatusText">Chế độ: Đơn (Độc lập)</span>
+                        </div>
+                    </div>
+                </div>
+<!-- traffic light and density status -->
+                <div class="config-section">
+                    <div class="traffic-light-panel">
+                        <div class="section-title">Đèn Giao Thông</div>
+                        <div class="traffic-light-container">
+                            {% for color, label, id_prefix in [('green','Xanh','green'), ('yellow','Vàng','yellow'), ('red','Đỏ','red')] %}
+                            <div class="traffic-light-item active" id="status{{ color|capitalize }}">
+                                <div class="light {{ color }}"></div>
+                                <div class="light-info">
+                                    <span>{{ label }}</span>
+                                    <b id="{{ id_prefix }}Time">0s</b>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div class="density-panel">
+                        <h3 class="section-title">Trạng thái Mật độ</h3>
+                        <div class="density-display">
+                            <div class="density-box"><span>Tổng Xe</span><div id="tongxe">0</div></div>
+                            <div class="density-box"><span>Mức Độ</span><div id="mode">—</div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- camera live stream -->
+            <div class="right-column">
+                <div class="camera-box">
+                    <div class="camera-label">
+                        <span class="live-dot"></span> Camera Live Stream A
+                    </div>
+                    <!-- Sử dụng thẻ <img> để hiển thị luồng video từ Flask, đảm bảo src trỏ đến đúng endpoint cung cấp luồng video -->
+                    <img id="cameraPreview" class="camera-video" src="/camera_stream" alt="Stream"> 
+                </div>
+            </div>
+        </div>
+        <!-- image results and counts -->
+        <div class="middle-row images-grid">
+            <div class="image-box">
+                <div class="image-header">
+                    <h2>Ảnh Gốc</h2>
+                    <span class="badge">Input</span>
+                </div>
+                <div class="img-wrapper">
+            <img id="anhgoc" src="/static/current_input.jpg" class="result-image" alt="Chờ dữ liệu...">
+                </div>
+            </div>
+            <div class="image-box">
+                <div class="image-header">
+                    <h2>Kết Quả Phân Tích</h2>
+                    <span class="badge success">YOLO Output</span>
+                </div>
+                 <div class="img-wrapper">
+                    <img id="sauxuly" src="/static/current_yolo.jpg" class="result-image" alt="Chờ phân tích...">
+                </div>
+            </div>
+        </div>
+        <!-- traffic density chart -->
+        <div class="chart-section">
+    <h3 class="section-title">Biểu đồ Mật độ xe</h3>
+    <div class="chart-container" style="position: relative; height:40vh; width:100%">
+        <canvas id="chart_live"></canvas>
+    </div>
+    </div>
+
+
+        <div id="loading" class="loading-indicator">
+            <div class="spinner"></div>
+            <p>⏳ Hệ thống đang xử lý hình ảnh...</p>
+        </div>
+        <div id="errorMessage" class="error-message"></div>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -213,24 +213,21 @@ body {
 .density-box div { font-size: 1.4em; font-weight: 700; margin-top: 5px; }
 
 /* ========================
-    VEHICLE COUNTS (Hàng dưới)
+    CHARTS & COUNTS
    ======================== */
-.counts-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
+   .chart-section {
+    background: white; 
+    padding: 20px; 
+    border-radius: 10px; 
+    margin-top: 20px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Thêm tí bóng cho đẹp */
 }
 
-.count-box {
-    background: rgba(255,255,255,0.03);
-    padding: 15px;
-    border-radius: 12px;
-    text-align: center;
-    border: 1px solid rgba(0,212,255,0.05);
+.section-title {
+    margin-top: 0;
+    color: #333;
+    font-size: 1.1rem;
 }
-
-.count-value { font-size: 2em; font-weight: 800; color: #00d4ff; }
-.count-label { color: #8899aa; text-transform: uppercase; font-size: 0.75em; }
 
 /* ========================
     BUTTONS

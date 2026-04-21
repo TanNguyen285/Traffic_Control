@@ -5,7 +5,7 @@ import sys
 import threading
 
 class TrafficLogic:
-    def __init__(self, yolo_ai, cnn_service, pre_proc, uart, cam, eth_service, station_id='TRAM_A'):
+    def __init__(self, yolo_ai, cnn_service, pre_proc, uart, cam, eth_service, station_id='TRAM_B'):
             self.ai = yolo_ai            
             self.cnn = cnn_service      
             self.pre_proc = pre_proc    

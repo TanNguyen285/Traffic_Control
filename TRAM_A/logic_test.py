@@ -1,11 +1,14 @@
+import os
 import time
 import cv2
 import base64
 import sys
 import threading
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 class TrafficLogic:
-    def __init__(self, yolo_ai, cnn_service, pre_proc, uart, cam, eth_service, station_id='TRAM_B'):
+    def __init__(self, yolo_ai, cnn_service, pre_proc, uart, cam, eth_service, station_id='TRAM_A'):
             self.ai = yolo_ai            
             self.cnn = cnn_service      
             self.pre_proc = pre_proc    
@@ -35,6 +38,8 @@ class TrafficLogic:
             self.ket_local = False
             self.xe_local = 0
             self.yolo_results = {"counts": [0,0,0,0,0], "yolo_image": None}
+
+
     def uart_esp32_rasp(self, signal="run"):
             """Hàm nhận tín hiệu từ UART"""
             if signal == "run1":
@@ -44,16 +49,6 @@ class TrafficLogic:
                 self.bien_run = True
                 print("[UART] Nhận lệnh quét AI (run)")
 
-    def _to_base64_url(self, frame):
-            if frame is None: return None
-            try:
-                # Quan trọng: Phải có header 'data:image/jpeg;base64,'
-                _, buffer = cv2.imencode('.jpg', frame)
-                b64_str = base64.b64encode(buffer).decode('utf-8')
-                return f"data:image/jpeg;base64,{b64_str}" # Bắt buộc phải có dòng này
-            except Exception as e:
-                print(f"Lỗi encode: {e}")
-                return None
         # ==========================================
         # BỘ TỰ ĐỘNG PHÁT TÍN HIỆU (MÃ GIẢ)
         # ==========================================
@@ -85,22 +80,33 @@ class TrafficLogic:
                 self.pre_proc.input_yolo_cnn(frame, skip_roi=False)
             return True
 
+
+  
         # ==========================================
         # KHỐI 2: CHẠY CNN (Nhận diện kẹt)
         # ==========================================
     def module_chay_cnn(self):
-            if self.frame_cnn is None: return False
-            status_local, conf, _ = self.cnn.predict(self.frame_cnn)
-            self.ket_local = (status_local == "Ket Xe")
-            self.frame_raw = self.cnn.draw_prediction(self.frame_raw, status_local, conf)
-            return self.ket_local
-
+        if self.frame_cnn is None: return False
+        status_local, conf, _ = self.cnn.predict(self.frame_cnn)
+        self.ket_local = (status_local == "Ket Xe")
+        
+        # Vẽ kết quả lên ảnh
+        self.frame_raw = self.cnn.draw_prediction(self.frame_raw, status_local, conf)
+        
+        # --- LƯU ĐÈ ẢNH GỐC ---
+        path_input = os.path.join(BASE_DIR, "static", "current_input.jpg")
+        cv2.imwrite(path_input, self.frame_raw)
+        print(f"--- Đang lưu ảnh vào: {os.path.abspath(path_input)}")
+        return self.ket_local
         # ==========================================
         # KHỐI 3: CHẠY YOLO (Đếm xe)
         # ==========================================
     def module_chay_yolo(self):
             if self.frame_yolo is None: return 0
             self.yolo_results, self.xe_local = self.ai.detect(self.frame_yolo, self.brightness)
+            path_yolo = os.path.join(BASE_DIR, "static", "current_yolo.jpg")
+            cv2.imwrite(path_yolo, self.yolo_results['frame'])
+            print(f"--- Đang lưu ảnh vào: {os.path.abspath(path_yolo)}")
             return self.xe_local
 
         # ==========================================
@@ -133,7 +139,7 @@ class TrafficLogic:
                 if self.module_chup_anh(): 
                     self.ket_local = self.module_chay_cnn()
                 
-                time.sleep(0.5) # Nghỉ để tránh quá tải CPU
+                time.sleep(1) # Nghỉ để tránh quá tải CPU
 
             # 4. SAU KHI THOÁT KẸT
             if self.bien_run1:
@@ -230,16 +236,22 @@ class TrafficLogic:
             return cmd
 
     def result_AI(self, remote_connected, ket_remote, xe_remote, cmd):
-            """Chuẩn bị dữ liệu để đẩy lên UI"""
-            return {
-                "cnn_status": "Ket Xe" if self.ket_local else "Thoang",
-                "xe_local": self.xe_local,
-                "xe_remote": xe_remote,
-                "remote_jam": ket_remote,
-                "remote_connected": remote_connected,
-                "brightness": round(self.brightness, 2),
-                "counts": self.yolo_results.get("counts", [0, 0, 0, 0, 0]),
-                "input_image": self._to_base64_url(self.frame_raw) if hasattr(self, '_to_base64_url') else None, 
-                "yolo_image": self.yolo_results.get('yolo_image'),
-                "final_cmd": cmd
-            }
+        """Chuẩn bị dữ liệu SIÊU NHẸ"""
+        import time
+        # Tạo mã version dựa trên miligiây để ép trình duyệt load ảnh mới
+        v = int(time.time() * 1000) 
+        
+        return {
+            "cnn_status": "Ket Xe" if self.ket_local else "Thoang",
+            "xe_local": self.xe_local,
+            "xe_remote": xe_remote,
+            "remote_jam": ket_remote,
+            "remote_connected": remote_connected,
+            "brightness": round(self.brightness, 2),
+            "counts": self.yolo_results.get("counts", [0, 0, 0, 0, 0]),
+            
+            # Gửi link file kèm token version v
+            "input_image": f"/static/current_input.jpg?v={v}", 
+            "yolo_image": f"/static/current_yolo.jpg?v={v}",
+            "final_cmd": cmd
+        }
