@@ -3,116 +3,188 @@ import numpy as np
 import time
 import os
 import sys
+import json
+import cv2 # Cần cho ONNX (hoặc dùng numpy trực tiếp)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# --- TỰ ĐỘNG FIX MỌI LỖI IMPORT ---
-# --- FIX ĐƯỜNG DẪN GỐC ---
+# Sau đó mới đến dòng import của bạn
+from benchmark.Model_benchmark.Simple_CNN import Simple_CNN
+# =========================================================
+# PATH FIX
+# =========================================================
 current_file_path = os.path.dirname(os.path.abspath(__file__))
-# Nếu benchmark_single.py nằm trong folder 'benchmark', chỉ cần nhảy ra 1 cấp để về 'Traffic_Control'
 project_root = os.path.abspath(os.path.join(current_file_path, "../")) 
-
-# Kiểm tra thử cho chắc chắn
-print(f"DEBUG: Project Root hiện tại là: {project_root}")
 
 if project_root not in sys.path:
     sys.path.append(project_root)
+
 for root, dirs, files in os.walk(project_root):
     if root not in sys.path:
         sys.path.append(root)
 
+# =========================================================
+# IMPORT
+# =========================================================
 from ultralytics import YOLO
-from benchmark.benchmark_engine import UnifiedBenchmark
-# Import đúng theo cấu trúc folder và tên class khác nhau của ông
-from benchmark.Model_benchmark.Simple_CNN import SimpleCNN
-from benchmark.Model_benchmark.Simple_LKA import Simple_LKA
+from benchmark.Model_benchmark.Simple_CNN import Simple_CNN
+from benchmark.Model_benchmark.Simple_Anpha import Simple_GLKA as Simple_Anpha
 from benchmark.Model_benchmark.Simple_GLKA import Simple_GLKA
 from benchmark.Model_benchmark.model_sci import Finetunemodel
 
-tester = UnifiedBenchmark()
+# =========================================================
+# DEVICE & JSON SAVE
+# =========================================================
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+RESULT_FILE = os.path.join(project_root, "benchmark_results.json")
 
+def save_result(data):
+    all_data = []
+    if os.path.exists(RESULT_FILE):
+        with open(RESULT_FILE, "r") as f:
+            try: all_data = json.load(f)
+            except: all_data = []
+    all_data.append(data)
+    with open(RESULT_FILE, "w") as f:
+        json.dump(all_data, f, indent=4)
+
+# =========================================================
+# CORE
+# =========================================================
 def run_single(relative_path, label):
     full_path = os.path.join(project_root, relative_path)
     if not os.path.exists(full_path):
-        print(f"❌ Không tìm thấy model tại: {full_path}")
+        print(f"❌ Không tìm thấy model: {full_path}")
         return
 
     p = full_path.lower()
     l = label.lower()
-    
-    # Mặc định size
     m_type = "Unknown"
     size = (224, 224)
-    
-    # 1. Nhận diện SCI
-    if "sci" in p or "difficult" in p:
-        model = Finetunemodel(weights=full_path).to(tester.device).eval()
-        m_type, size = "SCI", (480, 480)
-    
-    # 2. Nhận diện YOLO (Cả .pt và folder ncnn)
-    elif p.endswith(".pt") or os.path.isdir(full_path):
-        model = YOLO(full_path)
-        m_type, size = "YOLO", (480, 480)
+    onnx_session = None
 
-    # 3. Nhận diện các dòng CNN (.pth) - Khởi tạo dựa trên tên Class riêng biệt
+    # =========================
+    # LOAD MODEL LOGIC
+    # =========================
+    # 1. SCI / Difficult Model
+    if "sci" in p or "difficult" in p:
+        model = Finetunemodel(weights=full_path).to(DEVICE).eval()
+        m_type, size = "SCI", (480, 480)
+
+    # 2. ONNX Models (CNN, GLKA, Anpha)
+    elif p.endswith(".onnx"):
+        import onnxruntime as ort
+        providers = ['CUDAExecutionProvider', 'CPUExecutionProvider'] if DEVICE == "cuda" else ['CPUExecutionProvider']
+        onnx_session = ort.InferenceSession(full_path, providers=providers)
+        m_type, size = "ONNX", (224, 224)
+        model = None 
+
+    # 3. YOLO Models (.pt hoặc NCNN folder)
+    elif p.endswith(".pt") and "yolo" in l:
+        model = YOLO(full_path)
+        m_type, size = "YOLO_PT", (480, 480)
+        
+    elif os.path.isdir(full_path) or p.endswith(".ncnn"):
+        model = YOLO(full_path)
+        m_type, size = "YOLO_NCNN", (480, 480)
+
+    # 4. Standard PyTorch (.pth)
     elif p.endswith(".pth"):
         if "glka" in l:
-            model = Simple_GLKA(num_classes=2).to(tester.device)
+            model = Simple_GLKA(num_classes=2).to(DEVICE)
             m_type = "GLKA"
-        elif "lka" in l:
-            model = Simple_LKA(num_classes=2).to(tester.device)
-            m_type = "LKA"
+        elif "anpha" in l:
+            model = Simple_Anpha(num_classes=2).to(DEVICE)
+            m_type = "Anpha"
         else:
-            model = SimpleCNN(num_classes=2).to(tester.device)
+            model = Simple_CNN(num_classes=2).to(DEVICE)
             m_type = "SimpleCNN"
-            
-        model.load_state_dict(torch.load(full_path, map_location=tester.device))
+        
+        model.load_state_dict(torch.load(full_path, map_location=DEVICE))
         model.eval()
         size = (224, 224)
 
-    print(f"[*] Đang test: {label} ({m_type}) | Device: {tester.device}...")
-    
-    # Chuẩn bị dummy input (Tensor cho CNN/SCI, Numpy cho YOLO)
-    dummy = torch.randn(1, 3, *size).to(tester.device) if m_type != "YOLO" else np.zeros((*size, 3), dtype=np.uint8)
-    
-    # Warmup (10 vòng để GPU ổn định)
-    for _ in range(10):
-        _ = model.predict(dummy, verbose=False) if m_type == "YOLO" else model(dummy)
+    print(f"\n🚀 Test: {label} ({m_type}) | Device: {DEVICE}")
 
+    # =========================
+    # PREPARE INPUT (FIXED)
+    # =========================
+    if m_type == "ONNX":
+        input_name = onnx_session.get_inputs()[0].name
+        # Sửa np.randn thành np.random.randn
+        dummy = np.random.randn(1, 3, *size).astype(np.float32)
+    elif "YOLO" in m_type:
+        # Giữ nguyên vì np.zeros là chuẩn
+        dummy = np.zeros((*size, 3), dtype=np.uint8)
+    else:
+        # PyTorch thì dùng torch.randn là đúng
+        dummy = torch.randn(1, 3, *size).to(DEVICE)
+
+    # =========================
+    # BENCHMARK FUNCTION
+    # =========================
+    def inference():
+        if m_type == "ONNX":
+            onnx_session.run(None, {input_name: dummy})
+        elif "YOLO" in m_type:
+            model.predict(dummy, verbose=False)
+        else:
+            model(dummy)
+
+    # Warmup
+    for _ in range(10): inference()
+
+    # Measure
     times = []
     with torch.no_grad():
         for _ in range(50):
-            t0 = time.time()
-            if m_type == "YOLO": 
-                model.predict(dummy, verbose=False)
-            else: 
-                model(dummy)
+            if DEVICE == "cuda": torch.cuda.synchronize()
+            t0 = time.perf_counter()
             
-            if tester.device == "cuda": 
-                torch.cuda.synchronize()
+            inference()
             
-            times.append((time.time() - t0) * 1000)
-    
-    avg_ms = np.mean(times)
-    fps = 1000 / avg_ms
-    
-    print(f"   >> Kết quả: {avg_ms:.2f} ms | {fps:.2f} FPS")
-    tester.save_to_json(label, avg_ms, fps, size)
+            if DEVICE == "cuda": torch.cuda.synchronize()
+            t1 = time.perf_counter()
+            times.append((t1 - t0) * 1000)
 
+    # =========================
+    # RESULTS
+    # =========================
+    times = np.array(times)
+    avg, std, p95 = np.mean(times), np.std(times), np.percentile(times, 95)
+    fps = 1000 / avg
+
+    print(f"   >> {avg:.2f} ms | {fps:.2f} FPS")
+
+    save_result({
+        "label": label, "type": m_type, "device": DEVICE,
+        "mean_ms": float(avg), "std": float(std), "p95": float(p95),
+        "fps": float(fps), "input_size": size
+    })
+
+# =========================================================
+# RUN ALL
+# =========================================================
 if __name__ == "__main__":
-    # --- CHẠY TEST ---
-    
-    # 1. YOLO NCNN
-    # run_single("runs/detect/best_ncnn_model", "Yolo_NCNN")
-    #Test SCI
-    #run_single("runs/SCI/difficult.pt", "SCI")
+    test_cases = [
+        # --- YOLO ---
+        ("runs/Yolo/best.pt", "YOLO_PT"),
+        ("runs/Yolo/best_ncnn_model", "YOLO_NCNN"),
 
-    # Test Simple CNN
-    #run_single("runs/CNN/best_cnn_model.pth", "SimpleCNN")
-    #run_single("runs/CNN/simple_cnn.onnx", "SimpleCNN_ONNX")
+        # --- PYTORCH (.pth) ---
+        ("runs/CNN/best_acc.pth", "SimpleCNN_PTH"),
+        ("runs/Anpha/best_acc.pth", "Anpha_PTH"),
+        ("runs/GLKA/best_acc.pth", "GLKA_PTH"),
 
-    # Test LKA
-    run_single("runs/GLKA_345/best_cnn_model.pth", "GLKA_345")
-    #run_single("runs/GLKA_345/simple_glka345.pth", "LKA")
-    
-    # Test GLKA
-    #run_single("runs/GLKA_34/best_cnn_model.pth", "GLKA")
-    #run_single("runs/GLKA_34/simple_glka34.onnx", "GLKA")
+        # --- ONNX ---
+        ("runs/CNN/simple_cnn.onnx", "SimpleCNN_ONNX"),
+        ("runs/Anpha/simple_anpha.onnx", "Anpha_ONNX"),
+        ("runs/GLKA/simple_glka.onnx", "GLKA_ONNX"),
+
+        # --- SPECIAL ---
+        ("runs/SCI/difficult.pt", "SCI"),
+    ]
+
+    for path, label in test_cases:
+        run_single(path, label)
+
+    print(f"\n✅ DONE → Results saved at: {RESULT_FILE}")

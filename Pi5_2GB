@@ -1,0 +1,102 @@
+[
+    {
+        "label": "YOLO_PT",
+        "type": "YOLO_PT",
+        "device": "cpu",
+        "mean_ms": 194.65790773998378,
+        "fps": 5.137217447830374,
+        "input_size": [
+            480,
+            480
+        ]
+    },
+    {
+        "label": "YOLO_NCNN",
+        "type": "YOLO_NCNN",
+        "device": "cpu",
+        "mean_ms": 41.84911853999438,
+        "fps": 23.895365897475706,
+        "input_size": [
+            480,
+            480
+        ]
+    },
+    {
+        "label": "SimpleCNN_PTH",
+        "type": "SimpleCNN",
+        "device": "cpu",
+        "mean_ms": 80.86309533998701,
+        "fps": 12.366580772050874,
+        "input_size": [
+            224,
+            224
+        ]
+    },
+    {
+        "label": "Anpha_PTH",
+        "type": "Anpha",
+        "device": "cpu",
+        "mean_ms": 122.34279417998096,
+        "fps": 8.173754790403756,
+        "input_size": [
+            224,
+            224
+        ]
+    },
+    {
+        "label": "GLKA_PTH",
+        "type": "GLKA",
+        "device": "cpu",
+        "mean_ms": 96.34964410000975,
+        "fps": 10.378865530234986,
+        "input_size": [
+            224,
+            224
+        ]
+    },
+    {
+        "label": "SimpleCNN_ONNX",
+        "type": "ONNX",
+        "device": "cpu",
+        "mean_ms": 17.352801500042006,
+        "fps": 57.62758249713047,
+        "input_size": [
+            224,
+            224
+        ]
+    },
+    {
+        "label": "Anpha_ONNX",
+        "type": "ONNX",
+        "device": "cpu",
+        "mean_ms": 28.981868259993462,
+        "fps": 34.50433184738469,
+        "input_size": [
+            224,
+            224
+        ]
+    },
+    {
+        "label": "GLKA_ONNX",
+        "type": "ONNX",
+        "device": "cpu",
+        "mean_ms": 24.771467239997946,
+        "fps": 40.369025795344164,
+        "input_size": [
+            224,
+            224
+        ]
+    },
+    {
+        "label": "SCI",
+        "type": "SCI",
+        "device": "cpu",
+        "mean_ms": 35.510820920003425,
+        "fps": 28.160430372835872,
+        "input_size": [
+            480,
+            480
+        ]
+    }
+   
+]

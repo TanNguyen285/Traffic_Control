@@ -33,9 +33,9 @@ class EfficientBlock(nn.Module):
         else:
             return self.conv(x)
 
-class SimpleCNN(nn.Module):
+class Simple_CNN(nn.Module):
     def __init__(self, num_classes=2):
-        super(SimpleCNN, self).__init__()
+        super(Simple_CNN, self).__init__()
         
         # Layer 1: Lớp cửa ngõ (Conv1)
         self.stem = conv_bn_relu(3, 32, kernel_size=3, stride=2, padding=1)
@@ -83,7 +83,7 @@ class SimpleCNN(nn.Module):
 # PHẦN KIỂM TRA MÔ HÌNH
 # ==========================================
 if __name__ == "__main__":
-    model = SimpleCNN(num_classes=2)
+    model = Simple_CNN(num_classes=2)
     
     # Tính toán tổng số tham số
     total_params = sum(p.numel() for p in model.parameters())

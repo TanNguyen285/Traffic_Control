@@ -1,25 +1,15 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class GLKA(nn.Module):
     def __init__(self, dim):
         super().__init__()
-        # 1. Local Focus (DW 5x5)
+        self.dim = dim
+        self.K = 13  # [FIX 1] thiếu self.K → crash khi switch_to_deploy()
+
         self.conv0 = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
         
-        # 2. Global Focus (Dilation đa nhánh - học tư duy UniRepLKNet)
-        # Nhánh này giúp nhìn xa mà không làm nặng model
-       # self.conv_spatial_1 = nn.Conv2d(dim, dim, 7, stride=1, padding=9, groups=dim, dilation=3)
-        self.conv_spatial_1 = nn.Conv2d(dim, dim, 7, stride=1, padding=9, groups=dim, dilation=3)
-        self.bn1 = nn.BatchNorm2d(dim)
-
-        # Nhánh 2: Medium Kernel (3x3, dil=3) -> Cảm nhận vùng 7x7
-        self.conv_spatial_2 = nn.Conv2d(dim, dim, 3, stride=1, padding=3, groups=dim, dilation=3)
-        self.bn2 = nn.BatchNorm2d(dim)
-        
-
-
-        # 3. Channel Attention (SE Block) - Giúp AI biết kênh nào quan trọng cho kẹt xe
         self.se = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
             nn.Conv2d(dim, dim // 8, 1),
@@ -27,25 +17,78 @@ class GLKA(nn.Module):
             nn.Conv2d(dim // 8, dim, 1),
             nn.Sigmoid()
         )
-    
+
+        self.branch1 = nn.Sequential(
+            nn.Conv2d(dim, dim, 3, padding=1, groups=dim, dilation=1),
+            nn.BatchNorm2d(dim)
+        )
+        self.branch2 = nn.Sequential(
+            nn.Conv2d(dim, dim, 3, padding=3, groups=dim, dilation=3),
+            nn.BatchNorm2d(dim)
+        )
+        self.branch3 = nn.Sequential(
+            nn.Conv2d(dim, dim, 5, padding=4, groups=dim, dilation=2),
+            nn.BatchNorm2d(dim)
+        )
+        self.branch4 = nn.Sequential(
+            nn.Conv2d(dim, dim, 5, padding=6, groups=dim, dilation=3),
+            nn.BatchNorm2d(dim)
+        )
+
+        self.reparam_conv = None
 
     def forward(self, x):
-        u = x.clone()
-        # Mix thông tin local và global
-        attn = self.conv0(x)
-        attn = self.conv_spatial_1(attn) + self.conv_spatial_2(attn) 
+        global_conv = self.conv0(x) #Conv5x5, padding=2, groups=dim dùng để tạo feature map chung cho cả 4 branch sau đó mới áp attention và conv riêng biệt cho từng branch
+        anchor = global_conv * self.se(global_conv)
         
-       # attn = self.conv1(attn)
-        # Lọc qua SE Block trước khi nhân attention map
-        attn = attn * self.se(attn)
+        if self.reparam_conv is not None:
+            branch_main = self.reparam_conv(global_conv) #chỉ dùng conv đã gộp sau khi deploy
+        else:
+            branch_main = self.branch1(global_conv) + self.branch2(global_conv) + \
+                          self.branch3(global_conv) + self.branch4(global_conv)
         
+        return anchor*branch_main
 
-        return u * attn
-    
+    def switch_to_deploy(self):
+        w1, b1 = self._fuse_bn(self.branch1)
+        w2, b2 = self._fuse_bn(self.branch2)
+        w3, b3 = self._fuse_bn(self.branch3)
+        w4, b4 = self._fuse_bn(self.branch4)
 
-    
+        # [FIX 2] d phải khớp dilation thực tế của từng conv
+        # branch1: dilation=1, branch2: dilation=3, branch3: dilation=2, branch4: dilation=1
+        W_equiv = self._to_target_k(w1, 1) + self._to_target_k(w2, 3) + \
+                  self._to_target_k(w3, 2) + self._to_target_k(w4, 3)
+        B_equiv = b1 + b2 + b3 + b4
+        
+        self.reparam_conv = nn.Conv2d(self.dim, self.dim, self.K, padding=self.K//2, groups=self.dim)
+        self.reparam_conv.weight.data = W_equiv
+        self.reparam_conv.bias.data = B_equiv
+        
+        del self.branch1, self.branch2, self.branch3, self.branch4
+
+    def _fuse_bn(self, sequential_block):
+        conv = sequential_block[0]
+        bn = sequential_block[1]
+        std = (bn.running_var + bn.eps).sqrt()
+        t = (bn.weight / std).reshape(-1, 1, 1, 1)
+        fused_weight = conv.weight * t
+        fused_bias = bn.bias - bn.running_mean * bn.weight / std
+        return fused_weight, fused_bias
+
+    def _to_target_k(self, k, d):
+        c, m, orig_k, _ = k.shape
+        kd = (orig_k - 1) * d + 1
+        sparse = torch.zeros((c, m, kd, kd), device=k.device)
+        sparse[:, :, ::d, ::d] = k
+        pad = (self.K - kd) // 2
+        return F.pad(sparse, [pad, pad, pad, pad])
+
+
+# =================================================================
+# 2. CÁC THÀNH PHẦN BỔ TRỢ CỦA MẠNG (EFFICIENT BLOCK)
+# =================================================================
 def conv_bn_relu(in_channels, out_channels, kernel_size, stride=1, padding=0, groups=1):
-    """Khối Convolution tiêu chuẩn đi kèm BatchNorm và ReLU6"""
     return nn.Sequential(
         nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, groups=groups, bias=False),
         nn.BatchNorm2d(out_channels),
@@ -60,25 +103,19 @@ class EfficientBlock(nn.Module):
         self.use_residual = (stride == 1 and in_channels == out_channels)
         hidden_dim = in_channels * expansion_ratio
 
-        # 1. Mở rộng kênh
         self.expand = conv_bn_relu(in_channels, hidden_dim, kernel_size=1)
         
-        # 2. Xử lý không gian (DW 3x3 hoặc GLKA)
         if self.use_glka:
             if self.stride == 2:
-                # Nếu giảm ảnh (Stride 2), vẫn cần DW 3x3 để nén ảnh mịn
                 self.dw = conv_bn_relu(hidden_dim, hidden_dim, kernel_size=3, stride=2, padding=1, groups=hidden_dim)
                 self.glka = GLKA(hidden_dim)
             else:
-                # Nếu Stride 1, BỎ HOÀN TOÀN DW 3x3, chỉ dùng GLKA cho nhẹ và bao quát
                 self.dw = nn.Identity() 
                 self.glka = GLKA(hidden_dim)
         else:
-            # Nếu không dùng GLKA, quay lại DW 3x3 truyền thống
             self.dw = conv_bn_relu(hidden_dim, hidden_dim, kernel_size=3, stride=stride, padding=1, groups=hidden_dim)
             self.glka = nn.Identity()
 
-        # 3. Nén kênh
         self.project = nn.Sequential(
             nn.Conv2d(hidden_dim, out_channels, kernel_size=1, stride=1, padding=0, bias=False),
             nn.BatchNorm2d(out_channels),
@@ -95,70 +132,67 @@ class EfficientBlock(nn.Module):
             return identity + out
         return out
 
+
+# =================================================================
+# 3. KIẾN TRÚC TỔNG THỂ SIMPLE_GLKA
+# =================================================================
 class Simple_GLKA(nn.Module):
     def __init__(self, num_classes=2):
         super(Simple_GLKA, self).__init__()
         
-        # Layer 1: Lớp cửa ngõ (Conv1)
         self.stem = conv_bn_relu(3, 32, kernel_size=3, stride=2, padding=1)
 
-        # Layers 2 đến 7: Cấu trúc 6 khối phân tầng (Thêm tham số use_lka)
         self.blocks = nn.Sequential(
-            # Layer 2: EB1 (Ảnh còn to -> không dùng GLKA)
-            EfficientBlock(in_channels=32, out_channels=32, stride=1, expansion_ratio=2, use_glka=False),
-            
-            # Layer 3: EB2 
-            EfficientBlock(in_channels=32, out_channels=64, stride=2, expansion_ratio=2, use_glka=True),
-            
-            # ==========================================
-            # ĐIỂM VÀNG CHO GLKA: EB3 và EB4
-            # Tại đây ảnh khoảng 56x56 và 28x28, GLKA bao quát được tổng thể
-            # ==========================================
-            # Layer 4: EB3 
-            EfficientBlock(in_channels=64, out_channels=64, stride=1, expansion_ratio=2, use_glka=True),
-            
-            # Layer 5: EB4 (Có Stride=2 để giảm ảnh, DW sẽ giảm trước rồi GLKA quét sau)
-            EfficientBlock(in_channels=64, out_channels=128, stride=2, expansion_ratio=2, use_glka=True),
-            
-            # Layer 6: EB5 (Ảnh đã nhỏ, GLKA vẫn có ích để bao quát tổng thể)
-            EfficientBlock(in_channels=128, out_channels=128, stride=1, expansion_ratio=2, use_glka=False),
-            
-            # Layer 7: EB6 
-            EfficientBlock(in_channels=128, out_channels=256, stride=2, expansion_ratio=2, use_glka=False),
+            EfficientBlock(32, 32, stride=1, expansion_ratio=2, use_glka=False),
+            EfficientBlock(32, 64, stride=2, expansion_ratio=2, use_glka=True),
+            EfficientBlock(64, 64, stride=1, expansion_ratio=2, use_glka=True),
+            EfficientBlock(64, 128, stride=2, expansion_ratio=2, use_glka=True),
+            EfficientBlock(128, 128, stride=1, expansion_ratio=2, use_glka=False),
+            EfficientBlock(128, 256, stride=2, expansion_ratio=2, use_glka=False),
         )
 
-        # Layer 8 & 9: Pooling và Phân loại
-        self.classifier = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1), # Hoạt động giống GlobalAvgPool
+        self.classifier_pool = nn.AdaptiveAvgPool2d(1)
+        self.classifier_fc = nn.Sequential(
             nn.Flatten(),
-            nn.Dropout(p=0.3),       # Chống học vẹt
+            nn.Dropout(p=0.3),
             nn.Linear(256, num_classes)
         )
 
     def forward(self, x):
         x = self.stem(x)
         x = self.blocks(x)
-        x = self.classifier[0](x) # AdaptiveAvgPool2d
-        features = torch.flatten(x, 1) # Đây là vector đặc trưng (256 chiều)
-        out = self.classifier[1:](features) # Flatten, Dropout, Linear
-        return out, features # Trả về cả 2
+        x = self.classifier_pool(x)
+        features = torch.flatten(x, 1)
+        out = self.classifier_fc(features)  # [FIX 3] dùng features thay vì x
+        return out, features
 
-# ==========================================
-# PHẦN KIỂM TRA MÔ HÌNH
-# ==========================================
+
+# =================================================================
+# KIỂM TRA MÔ HÌNH
+# =================================================================
 if __name__ == "__main__":
-    model = Simple_GLKA(num_classes=2)
+    import copy
+
+    model = Simple_GLKA(num_classes=2).eval()
     
-    # Tính toán tổng số tham số
     total_params = sum(p.numel() for p in model.parameters())
+    print(f"Kiến trúc GLKA Net")
     print(f"Tổng số tham số: {total_params / 1e6:.3f} M")
     
-    # Chạy thử với ảnh đầu vào 224x224 (Như bạn yêu cầu)
     test_input = torch.randn(1, 3, 224, 224)
-    out, features = model(test_input)
+    with torch.no_grad():
+        out, features = model(test_input)
     
-    print(f"Kích thước tensor phân loại (Out): {out.shape}") 
-    print(f"Kích thước vector đặc trưng (Features): {features.shape}") 
-  
+    print(f"Input: {test_input.shape}")
+    print(f"Output (Logits): {out.shape}") 
+    print(f"Features vector: {features.shape}")
 
-
+    # Xác nhận deploy cho output giống hệt train
+    model_deploy = copy.deepcopy(model)
+    for m in model_deploy.modules():
+        if isinstance(m, GLKA):
+            m.switch_to_deploy()
+    with torch.no_grad():
+        out_deploy, _ = model_deploy(test_input)
+    diff = (out - out_deploy).abs().max().item()
+    print(f"Train vs Deploy max diff: {diff:.2e}  {'✓' if diff < 1e-4 else '✗ FAIL'}")
