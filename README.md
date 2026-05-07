@@ -12,7 +12,7 @@
 
 `Traffic_Control` là một hệ thống quản lý giao thông thông minh dựa trên công nghệ Edge AI, được tối ưu hóa để triển khai trên **Raspberry Pi 5** với khả năng giao tiếp với các thiết bị điều khiển ngoại vi như **ESP32**. Hệ thống cung cấp các tính năng giám sát thời gian thực, phân tích mật độ giao thông và điều phối tín hiệu giao thông một cách hiệu quả với mức tiêu thụ tài nguyên tối thiểu.
 <p align="center">
-  <img src="IMAGE/benchmark_final_report.png" width="50%"><br>
+  <img src="IMAGE/Benchmark.svg" width="50%"><br>
   <em>Hình 1: Biểu đồ so sánh hiệu năng xử lý giữa RTX 4050, Raspberry Pi 4 và Raspberry Pi 5</em>
 </p>
 
@@ -63,18 +63,18 @@ Hệ thống được thiết kế theo mô hình xử lý tuần tự gồm 4 t
 <p align="center">
   <img src="IMAGE/Layer.svg" width="35%" />
   &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="IMAGE/All_GLKA.svg" width="50%" />
+  <img src="IMAGE/sosanh.png" width="50%" />
   <br>
   <em>Hình 3: Thông số kỹ thuật của mô hình Simple_GLKA</em>
 </p>
 
 <p align="center">
-  <img src="IMAGE\Tree_GLKA.svg" width="60%"><br>
+  <img src="IMAGE\GLKA.svg" width="60%"><br>
   <em>Hình 4: Kiến trúc mô hình Simple_GLKA</em>
 </p>
 
 <p align="center">
-  <img src="IMAGE\attentionmap.svg" width="60%"><br>
+  <img src="IMAGE\atten.svg" width="60%"><br>
   <em>Hình 5: Visualization Attention Map và Matrix</em>
 </p>
 
