@@ -3,7 +3,7 @@ git clone https://github.com/TanNguyen285/Traffic_Control.git
 cd Traffic_Control
 
 #tạo version 
- git checkout main
+git checkout main
 git pull origin main
 git tag -a v1.0 -m "Stable YOLOv8 release"
 git push origin v1.0

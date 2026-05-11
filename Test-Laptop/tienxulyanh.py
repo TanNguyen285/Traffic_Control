@@ -36,12 +36,24 @@ class Tienxulyanh:
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             pil_img = Image.fromarray(rgb)
             tensor = self.transform(pil_img).unsqueeze(0).to(self.device)
+            
             with torch.no_grad():
                 _, r = self.sci_net(tensor)
+            
             enhanced = r[0].permute(1, 2, 0).cpu().numpy()
             enhanced = (np.clip(enhanced, 0, 1) * 255).astype(np.uint8)
-            return cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR)
-        except: return frame # Nếu có lỗi gì đó thì trả về ảnh gốc (không bị crash)
+            enhanced_bgr = cv2.cvtColor(enhanced, cv2.COLOR_RGB2BGR)
+
+            # --- GIẢM SÁNG TẠI ĐÂY ---
+            # alpha: trọng số ảnh đã tăng sáng (0.0 -> 1.0)
+            # Nếu alpha càng nhỏ, ảnh sẽ càng tối và giống ảnh gốc hơn.
+            alpha = 0.65 
+            result = cv2.addWeighted(enhanced_bgr, alpha, frame, 1 - alpha, 0)
+            
+            return result
+        except Exception as e:
+            print(f"Lỗi SCI: {e}")
+            return frame
 # Chuẩn bị ảnh cho YOLO và CNN, đồng thời tạo ảnh hiển thị lên Web/UI
     def input_yolo_cnn(self, frame, skip_roi=False, debug=True):
         if frame is None: return None, None, 0.0

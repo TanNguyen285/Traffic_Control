@@ -1,6 +1,6 @@
 [
     {
-        "time": "23:26:06",
+        "time": "18:39:57",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -12,7 +12,7 @@
         ]
     },
     {
-        "time": "23:26:15",
+        "time": "18:40:17",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -24,7 +24,7 @@
         ]
     },
     {
-        "time": "23:26:26",
+        "time": "18:40:37",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -36,7 +36,55 @@
         ]
     },
     {
-        "time": "23:26:36",
+        "time": "18:40:57",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "18:41:17",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "18:41:37",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "18:42:54",
+        "ket_ornot": "Thoang",
+        "xe_local": 2,
+        "counts": [
+            2,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "18:43:09",
         "ket_ornot": "Thoang",
         "xe_local": 1,
         "counts": [
@@ -48,227 +96,251 @@
         ]
     },
     {
-        "time": "23:26:46",
+        "time": "18:45:31",
         "ket_ornot": "Thoang",
-        "xe_local": 0,
+        "xe_local": 1,
         "counts": [
             0,
             0,
             0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:26:55",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:26:56",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:07",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:17",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:27",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:37",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:47",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:55",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:27:58",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:28:08",
-        "ket_ornot": "Thoang",
-        "xe_local": 11,
-        "counts": [
-            7,
-            0,
-            0,
-            0,
-            4
-        ]
-    },
-    {
-        "time": "23:28:18",
-        "ket_ornot": "Thoang",
-        "xe_local": 2,
-        "counts": [
-            2,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:28:29",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:28:39",
-        "ket_ornot": "Thoang",
-        "xe_local": 2,
-        "counts": [
-            2,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:28:49",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:28:56",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:28:59",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:29:09",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:29:19",
-        "ket_ornot": "Thoang",
-        "xe_local": 2,
-        "counts": [
             1,
+            0
+        ]
+    },
+    {
+        "time": "18:45:51",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:46:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:46:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:46:51",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:47:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:47:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:47:50",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:48:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:48:51",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:49:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:49:30",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:59:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:59:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "18:59:51",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "19:00:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "19:00:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "19:00:59",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:12:15",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "20:12:35",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            0,
+            0,
+            1,
+            0
+        ]
+    },
+    {
+        "time": "20:13:16",
+        "ket_ornot": "Ket Xe",
+        "xe_local": 3,
+        "counts": [
+            2,
             0,
             0,
             0,
@@ -276,7 +348,19 @@
         ]
     },
     {
-        "time": "23:37:12",
+        "time": "20:19:54",
+        "ket_ornot": "Thoang",
+        "xe_local": 1,
+        "counts": [
+            0,
+            1,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:21:14",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -288,7 +372,19 @@
         ]
     },
     {
-        "time": "23:37:24",
+        "time": "20:26:56",
+        "ket_ornot": "Ket Xe",
+        "xe_local": 5,
+        "counts": [
+            2,
+            0,
+            0,
+            0,
+            3
+        ]
+    },
+    {
+        "time": "20:30:06",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -300,19 +396,127 @@
         ]
     },
     {
-        "time": "23:37:35",
+        "time": "20:30:26",
         "ket_ornot": "Thoang",
-        "xe_local": 11,
+        "xe_local": 0,
         "counts": [
-            7,
             0,
             0,
             0,
-            4
+            0,
+            0
         ]
     },
     {
-        "time": "23:37:44",
+        "time": "20:30:46",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:31:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:31:51",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:32:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:32:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:34:12",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:34:31",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:34:51",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:35:11",
+        "ket_ornot": "Thoang",
+        "xe_local": 0,
+        "counts": [
+            0,
+            0,
+            0,
+            0,
+            0
+        ]
+    },
+    {
+        "time": "20:35:39",
         "ket_ornot": "Thoang",
         "xe_local": 1,
         "counts": [
@@ -324,7 +528,7 @@
         ]
     },
     {
-        "time": "23:37:58",
+        "time": "20:35:59",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -336,7 +540,7 @@
         ]
     },
     {
-        "time": "23:38:02",
+        "time": "20:39:59",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -348,7 +552,7 @@
         ]
     },
     {
-        "time": "23:38:04",
+        "time": "20:40:19",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -360,7 +564,7 @@
         ]
     },
     {
-        "time": "23:38:14",
+        "time": "20:40:39",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
@@ -372,11 +576,11 @@
         ]
     },
     {
-        "time": "23:38:25",
+        "time": "20:40:59",
         "ket_ornot": "Thoang",
-        "xe_local": 0,
+        "xe_local": 1,
         "counts": [
-            0,
+            1,
             0,
             0,
             0,
@@ -384,79 +588,7 @@
         ]
     },
     {
-        "time": "23:38:35",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:38:45",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:38:55",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:39:03",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:39:18",
-        "ket_ornot": "Thoang",
-        "xe_local": 3,
-        "counts": [
-            3,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:39:19",
-        "ket_ornot": "Thoang",
-        "xe_local": 0,
-        "counts": [
-            0,
-            0,
-            0,
-            0,
-            0
-        ]
-    },
-    {
-        "time": "23:39:29",
+        "time": "20:41:19",
         "ket_ornot": "Thoang",
         "xe_local": 0,
         "counts": [
