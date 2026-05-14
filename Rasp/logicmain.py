@@ -76,7 +76,6 @@ class TrafficLogic:
         self.ket_local = (status_local == "Ket Xe")
         self.frame_raw = self.cnn.draw_prediction(self.frame_raw, status_local, conf)
         cv2.imwrite(os.path.join(BASE_DIR, "static", "current_input.jpg"), self.frame_raw)
-        print(f"[CNN] {'Ket Xe' if self.ket_local else 'Thoang'}")
         return self.ket_local
 
     def module_chay_yolo(self):
@@ -85,7 +84,6 @@ class TrafficLogic:
         self.yolo_results, self.xe_local = self.ai.detect(self.frame_yolo, self.brightness)
         if 'frame' in self.yolo_results:
             cv2.imwrite(os.path.join(BASE_DIR, "static", "current_yolo.jpg"), self.yolo_results['frame'])
-        print(f"[YOLO] xe={self.xe_local}")
         return self.xe_local
 
     # =========================================================================
@@ -136,10 +134,7 @@ class TrafficLogic:
     # =========================================================================
 
     def _cho_dong_bo(self, timeout=15):
-        """
-        Chờ cả 2 bên ready=True VÀ 2 lần liên tiếp cùng k_rem.
-        Xong → tắt ready ngay (one-shot) buộc chu kỳ sau phải handshake lại từ đầu.
-        """
+    
         print(f"[{self.id}] Chờ đồng bộ remote (handshake)...")
         deadline = time.time() + timeout
         prev_k_rem = None
@@ -167,9 +162,9 @@ class TrafficLogic:
     # =========================================================================
 
     def _esp32_mode(self, xe_count):
-        if xe_count < 5:    return "m1"
-        elif xe_count < 10: return "m2"
-        elif xe_count < 15: return "m3"
+        if xe_count < 2:    return "m1"
+        elif xe_count < 5: return "m2"
+        elif xe_count < 8: return "m3"
         else:               return "m4"
 
     def logic_dieu_khien(self, ket_local, xe_local, ket_remote, xe_remote,
@@ -250,8 +245,10 @@ class TrafficLogic:
                             da_gui_thoat = True; da_gui_ket = False
                         if self.bien_run:
                             self.bien_run = False
-                            # Thoát kẹt xong → return ngay, không chạy YOLO
-                            return self.result_AI(False, False, 0, cmd), cmd
+                            self.xe_local = self.module_chay_yolo()           # chạy YOLO trước
+                            cmd_final = self.logic_dieu_khien(False, self.xe_local, False, 0, False)
+                            self._send_uart_single_shot(cmd_final)            # gửi mode cho ESP32
+                            return self.result_AI(False, False, 0, cmd_final), cmd_final
                     time.sleep(1)
 
             self.xe_local = self.module_chay_yolo()

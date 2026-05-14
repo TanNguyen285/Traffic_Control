@@ -31,9 +31,13 @@ public:
         _nutThoiGianDebounce = 0;
         _nutDangNhan         = false;
         _ctx.trangThai = TrangThai::CHO_KHOI_DONG;
+
+        // ← THÊM: set đúng giá trị mặc định theo nodeId
+        _ctx.luotTiepTheo_LaXanh = (_ctx.nodeId == NodeID::NODE_A) ? true : false;
+
         _ctx.den->tat_tat_ca();
         _ctx.man->xoa();
-    }
+}
 
     // Gọi trước cap_nhat() — drain queue trước khi update state
     void nhan_lenh(const LenhNhan& lenh) {
@@ -71,9 +75,16 @@ public:
             case TrangThai::YELLOW:        _xu_ly_vang(dt);               break;
             case TrangThai::RED:          _phaDo.cap_nhat(dt, _ctx);     break;
             case TrangThai::UU_TIEN:      _xaKet.cap_nhat(dt, _ctx);    break;
-            case TrangThai::EP_DO:        /* đứng yên, chờ lệnh 'a'/'b' từ XuLyLenh */ break;
+            case TrangThai::EP_DO: 
+            // Nếu thời gian ở trạng thái ÉP ĐỎ (dt) >= 150 giây (GIOI_HAN_UU_TIEN)
+            if (dt >= ThoiGian::GIOI_HAN_UU_TIEN) {
+                Serial.printf("[TIMEOUT] Node kia xa ket qua lau (150s) -> Tu thoat EP_DO\n");
+                ChuyenTrangThai::sang_do_dem(_ctx); 
+            }
+            break;
             case TrangThai::VANG_DEM:    _xu_ly_vang_dem(dt);           break;
             case TrangThai::CHO_MODE_MOI: _xu_ly_cho_mode_moi(dt); break;
+            case TrangThai::DO_DEM: _xu_ly_do_dem(dt);              break;
             default: break;
         }
     }
@@ -103,7 +114,11 @@ private:
         }
         
         if (dt >= ThoiGian::TG_VANG) {
+        if (_ctx.co_lenh_uu_tien) {
+            ChuyenTrangThai::kich_hoat_uu_tien(_ctx);
+            } else {
             ChuyenTrangThai::sang_do(_ctx);
+            }
         }
     }
 
@@ -118,20 +133,46 @@ private:
         }
         
         // --- HANDSHAKE: Gửi "run" về Pi khi sắp hết 5 giây vàng ---
-        if (!_ctx.daGuiRun && conLai_ms <= 3000) 
+        if (!_ctx.daGuiRun && conLai_ms <= 5000) 
         { 
             _ctx.uart->gui_ve_pi("run");
             _ctx.daGuiRun = true;
             Serial.printf("[SEND] [%lu ms] Gui 'run' ve Pi (VANG_DEM) | Con %u giay\n",
                           _ctx.hien_tai, ChuyenTrangThai::sang_giay(conLai_ms));
         }
+
+        if (dt >= ThoiGian::VANG_DEM_HET_UU_TIEN) {
+            ChuyenTrangThai::sang_cho_mode_moi(_ctx); 
+        }
+
+}
+
+    void _xu_ly_do_dem(uint32_t dt) {
+        uint32_t conLai_ms = ChuyenTrangThai::time_ConLai(dt, ThoiGian::DO_DEM_HET_UU_TIEN);
+        _ctx.man->hien_thi_so(ChuyenTrangThai::sang_giay(conLai_ms));
+        
+        // --- Debug: Log countdown ---
+        if (dt % 1000 == 0) {
+            Serial.printf("[DO_DEM] [%lu ms] Con lai: %u giay | Doi Pi phan hoi mode moi\n",
+                          _ctx.hien_tai, ChuyenTrangThai::sang_giay(conLai_ms));
+        }
+        
+        // --- HANDSHAKE: Gửi "run" về Pi khi sắp hết 5 giây vàng ---
+        if (!_ctx.daGuiRun && conLai_ms <= 5000) 
+        { 
+            _ctx.uart->gui_ve_pi("run");
+            _ctx.daGuiRun = true;
+            Serial.printf("[SEND] [%lu ms] Gui 'run' ve Pi (DO_DEM) | Con %u giay\n",
+                          _ctx.hien_tai, ChuyenTrangThai::sang_giay(conLai_ms));
+        }
         if (dt >= ThoiGian::VANG_DEM_HET_UU_TIEN) {
             ChuyenTrangThai::sang_cho_mode_moi(_ctx);
         }
-    }
+
+}
 
     // -----------------------------------------------------------
-    // CHO_MODE_MOI: nếu Pi không phản hồi sau 10s → fallback m0
+    // CHO_MODE_MOI: nếu Pi không phản hồi sau 5s → fallback m0
     // -----------------------------------------------------------
     void _xu_ly_cho_mode_moi(uint32_t dt) 
     {

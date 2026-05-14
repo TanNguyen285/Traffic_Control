@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
-#include <freertos/queue.h>
+
 
 #include "Kieudulieu.h"          
 #include "Cauhinhchan.h"         
@@ -23,7 +23,7 @@
 // ------------------------------------------------------------
 // Đối tượng toàn cục (static → tránh heap allocation muộn)
 // ------------------------------------------------------------
-static QueueHandle_t  hang_doi_lenh   = nullptr;
+
 
 static DenGiaoThong   denGiaoThong(Pin::DEN_XANH, Pin::DEN_VANG, Pin::DEN_DO);
 static Led7Doan       led7Doan(Pin::MAX7219_CLK, Pin::MAX7219_DIN, Pin::MAX7219_CS);
@@ -36,7 +36,7 @@ static BoDieuKhienNgaTu*  boDieuKhien = nullptr;   // Khởi tạo sau khi biế
 static NodeID doc_node_id() {
     pinMode(Pin::NODE_ID, INPUT_PULLUP);
     vTaskDelay(pdMS_TO_TICKS(10));    // Chờ điện áp pull-up ổn định
-    return (digitalRead(Pin::NODE_ID) == LOW)
+    return (digitalRead(Pin::NODE_ID) == HIGH)
            ? NodeID::NODE_A
            : NodeID::NODE_B;
 }
@@ -66,23 +66,21 @@ static void Doc_UART(void* tham_so) {
 // ------------------------------------------------------------
 static void XuLyCapNhat(void* tham_so) {
     LenhNhan lenh;
-
     for (;;) {
-        // Xử lý toàn bộ lệnh đang chờ trong queue (non-blocking)
-        while (xQueueReceive(hang_doi_lenh, &lenh, 0) == pdTRUE) {
+        if (boUART.co_lenh(lenh)) { 
             if (boDieuKhien) {
                 boDieuKhien->nhan_lenh(lenh);
             }
         }
-
-        // Cập nhật state machine với thời gian thực
         if (boDieuKhien) {
             boDieuKhien->cap_nhat((uint32_t)millis());
         }
 
-        vTaskDelay(pdMS_TO_TICKS(10));  // Độ phân giải thời gian = 10ms
+        // BẮT BUỘC: Phải có delay để nhường Core 1 cho các tác vụ hệ thống (WiFi/TCP)
+        vTaskDelay(pdMS_TO_TICKS(10)); 
     }
 }
+
 
 // ------------------------------------------------------------
 // setup()
@@ -93,12 +91,7 @@ void setup() {
     Serial.println();
     Serial.println("=== He thong dieu khien den giao thong ===");
 
-    // 1. Tạo FreeRTOS queue lệnh
-    hang_doi_lenh = xQueueCreate(CauHinhUART::KHO_CHUA_LENH, sizeof(LenhNhan));
-    if (!hang_doi_lenh) {
-        Serial.println("[FATAL] Khong tao duoc queue! Restarting...");
-        ESP.restart();
-    }
+
 
     // 2. Xác định Node ID
     NodeID nodeId = doc_node_id();
@@ -107,7 +100,7 @@ void setup() {
     // 3. Khởi tạo phần cứng
     denGiaoThong.khoi_dong();
     led7Doan.khoi_dong();
-    boUART.khoi_dong(Serial2, hang_doi_lenh);
+    boUART.khoi_dong(Serial2);
 
     // 4. Khởi tạo state machine
     boDieuKhien = new BoDieuKhienNgaTu(nodeId, denGiaoThong, led7Doan, boUART);

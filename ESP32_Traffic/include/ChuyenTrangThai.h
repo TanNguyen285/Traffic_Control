@@ -21,6 +21,12 @@ namespace ChuyenTrangThai {
 
     // ----------------------------------------------------------
     inline void sang_xanh(ThongTinHeThong& tt) {
+        if (tt.co_lenh_moi) {
+        tt.tong_tg_xanh    = ThoiGian::TG_XANH[tt.che_do_moi];
+        tt.che_do_hien_tai = tt.che_do_moi;
+        tt.co_lenh_moi     = false;
+        }
+        tt.tg_xanh_chot = tt.tong_tg_xanh;
         tt.trangThai      = TrangThai::GREEN;
         tt.thoiDiemBatDau = tt.hien_tai;
         tt.daGuiRun       = false;
@@ -40,6 +46,12 @@ namespace ChuyenTrangThai {
     }
 
     inline void sang_do(ThongTinHeThong& tt) {
+        if (tt.co_lenh_moi) {
+        tt.tong_tg_xanh    = ThoiGian::TG_XANH[tt.che_do_moi];
+        tt.che_do_hien_tai = tt.che_do_moi;
+        tt.co_lenh_moi     = false;
+        }
+        tt.tg_do_chot = tt.tong_tg_xanh + ThoiGian::TG_VANG;
         tt.trangThai      = TrangThai::RED;
         tt.thoiDiemBatDau = tt.hien_tai;
         tt.daGuiRun       = false;
@@ -80,16 +92,68 @@ namespace ChuyenTrangThai {
         tt.man->hien_thi_so((uint8_t)(ThoiGian::VANG_DEM_HET_UU_TIEN / 1000));
     }
 
-    inline void sang_cho_mode_moi(ThongTinHeThong& tt) {
-        Serial.printf("[STATE] [%lu ms] CHO_MODE_MOI - Tat tat ca den, cho Pi phan hoi (timeout 10s)\n", tt.hien_tai);
-        tt.trangThai = TrangThai::CHO_MODE_MOI;
-        tt.den->tat_tat_ca();
-        tt.man->xoa();
+        inline void sang_do_dem(ThongTinHeThong& tt) {
+        tt.trangThai      = TrangThai::DO_DEM;
+        tt.thoiDiemBatDau = tt.hien_tai;
+        Serial.printf("[STATE] [%lu ms] DO DEM - Sau XA KET | Thoi gian: 5 giay | Doi Pi gui mode moi\n", tt.hien_tai);
+        tt.co_lenh_moi    = false;   
+        tt.daGuiRun       = false;
+        tt.den->bat_do();
+        tt.man->hien_thi_so((uint8_t)(ThoiGian::DO_DEM_HET_UU_TIEN / 1000));
     }
+
+    inline void kich_hoat_uu_tien(ThongTinHeThong& tt) {
+    tt.co_lenh_uu_tien = false;
+    bool laCuaMinh = (tt.nodeId == NodeID::NODE_A && tt.lenh_uu_tien == 0) ||
+                     (tt.nodeId == NodeID::NODE_B && tt.lenh_uu_tien == 1);
+    if (laCuaMinh) {
+        Serial.printf("[UU_TIEN] [%lu ms] Kich hoat XA_KET\n", tt.hien_tai);
+        sang_xa_ket(tt);
+    } else {
+        Serial.printf("[UU_TIEN] [%lu ms] Kich hoat EP_DO\n", tt.hien_tai);
+        sang_ep_do(tt);
+    }
+}
+        
+inline void bat_dau_chu_ky(ThongTinHeThong& tt) {
+    // 1. Chạy pha dựa trên biến trạng thái hiện tại
+    if (tt.luotTiepTheo_LaXanh) {
+        sang_xanh(tt);
+        // Sau khi kích hoạt Xanh, chuẩn bị cho lượt tới là Đỏ
+        tt.luotTiepTheo_LaXanh = false; 
+    } else {
+        sang_do(tt);
+        // Sau khi kích hoạt Đỏ, chuẩn bị cho lượt tới là Xanh
+        tt.luotTiepTheo_LaXanh = true;
+    }
+    
+    Serial.printf("[SWITCH] Node %c chuyen pha. Luot toi se la: %s\n", 
+                  (tt.nodeId == NodeID::NODE_A ? 'A' : 'B'),
+                  (tt.luotTiepTheo_LaXanh ? "XANH" : "DO"));
+}
+
+
+    inline void sang_cho_mode_moi(ThongTinHeThong& tt) {
+    // Kiểm tra buffer TRƯỚC — nếu đã có mode thì chạy luôn
+    if (tt.co_lenh_moi) {
+        tt.che_do_hien_tai = tt.che_do_moi;
+        tt.tong_tg_xanh    = ThoiGian::TG_XANH[tt.che_do_moi];
+        tt.co_lenh_moi     = false;
+        tt.daGuiRun = false;
+        Serial.printf("[MODE_APPLY] [%lu ms] Co mode m%u san sang -> Chay luon\n",
+                      tt.hien_tai, tt.che_do_hien_tai);
+        bat_dau_chu_ky(tt);
+        return;  // ← quan trọng, không xuống dưới
+    }
+
+    // Không có mode → mới chờ
+    Serial.printf("[STATE] [%lu ms] CHO_MODE_MOI - Cho Pi phan hoi\n", tt.hien_tai);
+    tt.trangThai      = TrangThai::CHO_MODE_MOI;
+    tt.thoiDiemBatDau = tt.hien_tai;
+    tt.den->tat_tat_ca();
+    tt.man->xoa();
+}
 
     // Node A → XANH trước; Node B → ĐỎ trước (đối nghịch ngã tư)
-    inline void bat_dau_chu_ky(ThongTinHeThong& tt) {
-        (tt.nodeId == NodeID::NODE_A) ? sang_xanh(tt) : sang_do(tt);
-    }
 
-} // namespace ChuyenTrangThai
+} 

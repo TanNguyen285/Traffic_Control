@@ -34,7 +34,5 @@ public:
             tt.daGuiRun = false;
             ChuyenTrangThai::sang_vang_dem(tt);    
         }
-        // Không làm gì khác: đèn xanh đã bật từ lúc vào pha,
-        // màn hình đã xóa. Chỉ chờ lệnh 'a'/'b' hoặc timeout.
     }
 };

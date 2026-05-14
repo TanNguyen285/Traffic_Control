@@ -4,6 +4,7 @@ import atexit
 import time
 import cv2
 import threading
+import queue
 import json
 from flask import Flask, render_template, jsonify, Response, request
 from quanly import quanly_log
@@ -18,18 +19,19 @@ from khoitao_mt import init_system
 
 app = Flask(__name__)
 
-# Khởi tạo hệ thống
 engine, cam, Config, ROI_lane = init_system()
-
-# Log — khởi tạo TRƯỚC khi dùng ở bất kỳ đâu
 json_log = quanly_log(log_dir="logs")
 
-# Kết quả mới nhất để SSE đẩy lên Web
-latest_result = None
-result_ready  = False
+sse_queue = queue.Queue(maxsize=100)
+
+def push_sse(payload: dict):
+    try:
+        sse_queue.put_nowait(payload)
+    except queue.Full:
+        pass
 
 # ==========================================
-# API QUẢN LÝ CHẾ ĐỘ & LOG
+# API
 # ==========================================
 
 @app.route('/get_log_data')
@@ -53,83 +55,69 @@ def set_mode():
 
 @app.route('/get_mode')
 def get_mode():
-    # Lấy thẳng từ engine — nguồn sự thật duy nhất
     return jsonify({'mode': engine.operation_mode})
 
 # ==========================================
-# SSE — chỉ push khi có kết quả mới
+# SSE
 # ==========================================
 
 @app.route('/stream_results')
 def stream_results():
     def event_stream():
-        global latest_result, result_ready
-
-        # Gửi lịch sử ngay khi client kết nối để nạp chart
         yield f"data: {json.dumps(json_log.data_list)}\n\n"
-
         while True:
-            if result_ready and latest_result:
-                yield f"data: {json.dumps(latest_result)}\n\n"
-                result_ready = False
-            time.sleep(0.1)
+            try:
+                payload = sse_queue.get(block=True, timeout=0.5)
+                yield f"data: {json.dumps(payload)}\n\n"
+            except queue.Empty:
+                yield ": heartbeat\n\n"
 
-    return Response(event_stream(), mimetype="text/event-stream")
+    resp = Response(event_stream(), mimetype="text/event-stream")
+    resp.headers["Cache-Control"]     = "no-cache"
+    resp.headers["X-Accel-Buffering"] = "no"
+    return resp
 
 # ==========================================
-# WORKER — chỉ chạy khi bien_run=True
+# WORKER
 # ==========================================
 
 def uart_event_worker():
-    global latest_result, result_ready
     while True:
         if engine.bien_run:
             print("\n" + "="*50)
             print(f"[DEBUG SYSTEM] BẮT ĐẦU CHU KỲ AI - Chế độ: {engine.operation_mode.upper()}")
             print("="*50)
 
-            # Thực thi AI
-            # Lưu ý: Nếu kẹt, hàm này sẽ kẹt trong vòng lặp 'while self.ket_local' bên trong engine
             result_new, cmd = engine.thuc_thi_AI()
 
             if result_new is not None:
-                latest_result = result_new
-                result_ready = True
-                
-                # In thông tin giao tiếp Ethernet
+                result_new["time"] = time.strftime("%H:%M:%S")
+                json_log.update_storage(result_new)
+                push_sse(result_new)
+
                 print(f"--- THÔNG SỐ GIAO TIẾP ---")
-                print(f"  > Kết nối Trạm kia: {'[OK]' if result_new['remote_connected'] else '[MẤT KẾT NỐI]联'}")
+                print(f"  > Kết nối Trạm kia: {'[OK]' if result_new['remote_connected'] else '[MẤT KẾT NỐI]'}")
                 print(f"  > Trạm Local ({engine.id}): {result_new['cnn_status']} | {result_new['xe_local']} xe")
-                
                 if result_new['remote_connected']:
                     print(f"  > Trạm Remote: {'KẸT' if result_new['remote_jam'] else 'THOÁNG'} | {result_new['xe_remote']} xe")
-                
                 print(f"  > LỆNH CUỐI (UART): {cmd}")
                 print("="*50 + "\n")
-                
-            # Reset biến run để chờ lệnh tiếp theo từ UART/Web
-            engine.bien_run = False 
-            
+
+            engine.bien_run = False
+
         time.sleep(0.1)
+
 t = threading.Thread(target=uart_event_worker, daemon=True)
 t.start()
 print("[APP] Worker khởi động — chờ tín hiệu run từ UART...")
 
 # ==========================================
-# ROUTE CAMERA & MANUAL
+# ROUTE CAMERA
 # ==========================================
 
 @app.route("/")
 def index():
     return render_template("index.html", class_names=Config.YOLO_CLASSES)
-
-@app.route('/manual_run', methods=['POST'])
-def manual_run():
-    data   = request.get_json()
-    signal = data.get('signal', 'run')
-    print(f"[MANUAL] Trigger '{signal}' từ Web")
-    engine.uart_esp32_rasp(signal)
-    return jsonify({'status': 'ok', 'signal': signal})
 
 @app.route('/camera_stream')
 def camera_stream():

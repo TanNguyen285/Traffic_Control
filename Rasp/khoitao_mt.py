@@ -1,4 +1,5 @@
 
+import subprocess
 import torch
 from ultralytics import YOLO
 from torchvision import transforms
@@ -20,8 +21,7 @@ from ROI import ROIManager
 #==========================================
 class Config:
     YOLO_PATH = "runs/Yolo/best_ncnn_model"
-    # CNN_PATH = "runs/exp3/best_cnn_model.pth"
-    CNN_PATH = "runs/Anpha/simple_anpha.onnx"  # Đường dẫn mới cho mô hình CNN đã chuyển sang ONNX
+    CNN_PATH = "runs/Anpha/simple_anpha.onnx"  
     SCI_PATH = "runs/SCI/difficult.pt"
     DEVICE = torch.device("cpu")
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
@@ -62,21 +62,17 @@ def init_system():
     # 3. YOLO AI
     yolo_model = YOLO(Config.YOLO_PATH)
     ai_yolo = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
+
     # 4. CNN Service
-    #cnn_net = SimpleCNN(num_classes=2).to(Config.DEVICE)
-    #cnn_net.load_state_dict(torch.load(Config.CNN_PATH, map_location=Config.DEVICE))
-    #cnn_net.eval()
     cnn_transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])#tham số chuẩn hóa ảnh theo ImageNet
     ])
     cnn_service = Simple_CNN_config(
-        #model=cnn_net, 
         model_path=Config.CNN_PATH,
         transform=cnn_transform,
         classes=Config.CNN_CLASSES, 
-        #device=Config.DEVICE
     )
     # 5. Traffic Engine (Dùng biến s_id đã tự động nhận diện)
     engine = TrafficLogic(
@@ -87,11 +83,14 @@ def init_system():
         cam=cam,
         eth_service=eth_service,
         station_id=s_id, # Truyền s_id vào đây
-    )
-    engine.auto_mode = False         # TẮT AUTO MODE - chỉ chạy khi nhận tín hiệu UART
-    engine.INTERVAL_RUN = 10         
-    engine.INTERVAL_RUN1 = 60        
+    )       
     # Đăng ký callback cho UART
     uart.start_listening(engine.uart_esp32_rasp)
+    #bật 2.4Ghz để ổn định xung chạy AI và giảm độ trễ
+    subprocess.run(
+        "echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor",
+        shell=True, capture_output=True
+    )
+    print("[SYSTEM] CPU governor: performance mode")
 
     return engine, cam, Config, ROI_lane

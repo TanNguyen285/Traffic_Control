@@ -8,8 +8,9 @@
 body {
     background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 100%);
     color: #e0e0e0;
-    font-family: 'Segoe UI', system-ui, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, Roboto, 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.6;
+    font-size: 16px;
     min-height: 100vh;
 }
 
@@ -30,14 +31,16 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
 }
 
 .title {
-    font-size: 1.6em;
+    font-weight: 700;
     background: linear-gradient(135deg, #00d4ff, #0099ff);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    font-weight: 700;
+    font-size: clamp(1.25rem, 2.5vw, 1.8rem);
 }
 
 /* ========================
@@ -45,16 +48,16 @@ body {
    ======================== */
 .container {
     width: 100%;
-    max-width: 1600px;
+    max-width: 1400px;
     margin: 0 auto 40px;
-    padding: 0 20px;
+    padding: 0 16px;
 }
 
 /* CHIA 2 CỘT CHÍNH: Trái 35% - Phải 65% */
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 380px 1fr; 
-    gap: 25px;
+    grid-template-columns: minmax(260px, 380px) 1fr;
+    gap: 20px;
     margin-bottom: 25px;
     align-items: stretch; /* Đảm bảo 2 cột cao bằng nhau */
 }
@@ -125,8 +128,9 @@ body {
 .camera-video {
     width: 100%;
     flex-grow: 1; /* Tự động lấp đầy chiều cao còn lại */
-    min-height: 450px;
-    object-fit: contain; 
+    object-fit: contain;
+    aspect-ratio: 16/9;
+    max-height: 720px;
     background: #000;
     border-radius: 10px;
     border: 1px solid #0f3460;
@@ -146,17 +150,18 @@ body {
     background: #000;
     border-radius: 10px;
     overflow: hidden;
-    height: 350px;
     display: flex;
     justify-content: center;
     align-items: center;
+    aspect-ratio: 16/9;
+    min-height: 180px;
 }
 
 .result-image {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
-    display: none; 
+    display: none;
 }
 
 .result-image.active { display: block; }
@@ -216,11 +221,11 @@ body {
     CHARTS & COUNTS
    ======================== */
    .chart-section {
-    background: white; 
-    padding: 20px; 
-    border-radius: 10px; 
+    background: rgba(255,255,255,0.04);
+    padding: 18px;
+    border-radius: 10px;
     margin-top: 20px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* Thêm tí bóng cho đẹp */
+    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
 }
 
 .section-title {
@@ -233,7 +238,7 @@ body {
     BUTTONS
    ======================== */
 .btn-secondary {
-    padding: 16px;
+    padding: 12px 14px;
     border: none;
     border-radius: 12px;
     font-weight: 700;
@@ -354,5 +359,27 @@ body {
    ======================== */
 @media (max-width: 1200px) {
     .dashboard-grid { grid-template-columns: 1fr; }
-    .camera-video { min-height: 350px; }
+    .camera-video { aspect-ratio: 16/9; max-height: 560px; }
+    .middle-row { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 900px) {
+    body { font-size: 15px; }
+    .title { font-size: clamp(1.1rem, 4vw, 1.5rem); }
+    .mode-buttons { grid-template-columns: 1fr; }
+    .btn-secondary { padding: 12px; font-size: 0.95em; }
+    .dashboard-grid { gap: 16px; }
+}
+
+@media (max-width: 600px) {
+    body { font-size: 14px; }
+    .header { padding: 12px; }
+    .header-content { gap: 8px; }
+    .camera-video { max-height: 420px; }
+    .img-wrapper { min-height: 140px; }
+    .badge { font-size: 0.65em; padding: 3px 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }

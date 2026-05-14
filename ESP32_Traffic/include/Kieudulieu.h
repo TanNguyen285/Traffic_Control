@@ -9,6 +9,7 @@ enum class TrangThai : uint8_t {
     RED,                 // Đang bật đèn đỏ, đếm ngược
     UU_TIEN,             // Xả kẹt: xanh liên tục (tối đa 150s)
     VANG_DEM,           // Đèn vàng đệm 5s sau khi thoát xả kẹt
+    DO_DEM,
     EP_DO,              // Bị ép đỏ vì node kia đang xả kẹt — chờ lệnh dừng
     CHO_MODE_MOI        // Đã gửi "run", chờ Pi gửi mode mới
 };
@@ -23,7 +24,8 @@ enum class NodeID : uint8_t {
 enum class LoaiLenh : uint8_t {
     MODE,               // "m0" .. "m4"  — cập nhật chu kỳ
     BAT_UU_TIEN,         // 'A' (Node A) / 'B' (Node B) — bắt đầu xả kẹt
-    TAT_UU_TIEN          // 'a' (Node A) / 'b' (Node B) — dừng xả kẹt
+    TAT_UU_TIEN,          // 'a' (Node A) / 'b' (Node B) — dừng xả kẹt
+    BAT_DAU      
 };
 
 // Cấu trúc lệnh được đẩy vào FreeRTOS Queue

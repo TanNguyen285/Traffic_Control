@@ -22,6 +22,7 @@ public:
             case LoaiLenh::MODE:        _case_mode(lenh.giaTri, tt);       break;
             case LoaiLenh::BAT_UU_TIEN:  _case_uu_tien_bat(lenh.giaTri, tt); break;
             case LoaiLenh::TAT_UU_TIEN:  _case_uu_tien_tat(lenh.giaTri, tt); break;
+            case LoaiLenh::BAT_DAU:      _case_bat_dau(tt);                 break;
         }
     }
 
@@ -31,51 +32,65 @@ private:
     //   • Đang chạy (XANH/VANG/DO) → lưu vào bộ đệm, chờ hết ĐỎ
     //   • Đang dừng (CHO_MOI / CHO_KHOI_DONG) → áp dụng ngay
     // ----------------------------------------------------------
-    void _case_mode(uint8_t mode, ThongTinHeThong& tt) {
-        if (mode > 4) return;
-
-        bool dangChay = (tt.trangThai == TrangThai::GREEN ||
-                         tt.trangThai == TrangThai::YELLOW ||
-                         tt.trangThai == TrangThai::RED);
-        if (dangChay) {
-            tt.co_lenh_moi = true;
-            tt.che_do_moi   = mode;
-            Serial.printf("[LENH] [%lu ms] Nhan MODE m%u | Dang chay -> Dem vao bo dem\n",
-                          tt.hien_tai, mode);
-        } else {
-            tt.tong_tg_xanh = ThoiGian::TG_XANH[mode];
-            tt.che_do_hien_tai = mode;  // Update chế độ hiện tại
-            tt.co_lenh_moi  = false;
-            Serial.printf("[LENH] [%lu ms] Nhan MODE m%u | Dung -> Ap dung ngay\n",
-                          tt.hien_tai, mode);
+    void _case_bat_dau(ThongTinHeThong& tt) {
+        // Chỉ nhận lệnh Start nếu hệ thống đang ở trạng thái chờ
+        if (tt.trangThai == TrangThai::CHO_KHOI_DONG) {
+            Serial.printf("[EVENT] Da nhan ki tu Start (S) qua UART -> BAT DAU CHU KY!\n");
             ChuyenTrangThai::bat_dau_chu_ky(tt);
+        } else {
+            Serial.println("[CẢNH BÁO] Hệ thống đang chạy rồi, bỏ qua lệnh Start.");
         }
     }
+    void _case_mode(uint8_t mode, ThongTinHeThong& tt) {
+    if (mode > 4) return;
+
+    tt.che_do_moi  = mode;
+    tt.co_lenh_moi = true;
+
+    bool dangDung = (tt.trangThai == TrangThai::CHO_MODE_MOI||
+                     tt.trangThai == TrangThai::CHO_KHOI_DONG
+                    );
+
+    if (dangDung) {
+        tt.che_do_hien_tai = mode;
+        tt.tong_tg_xanh    = ThoiGian::TG_XANH[mode];
+        tt.co_lenh_moi     = false;
+        Serial.printf("[LENH] [%lu ms] Ap dung ngay m%u\n", tt.hien_tai, mode);
+        ChuyenTrangThai::bat_dau_chu_ky(tt);
+    }
+    else {
+        // VANG_DEM và đang chạy → chỉ lưu buffer, sang_cho_mode_moi sẽ xử lý
+        Serial.printf("[BUFFER] [%lu ms] Da nhan m%u. Se ap dung sau.\n", tt.hien_tai, mode);
+    }
+}
 
     // ----------------------------------------------------------
     // case 'A' → bật xả kẹt Node A (giaTri == 0)
     // case 'B' → bật xả kẹt Node B (giaTri == 1)
     //   Chỉ kích hoạt khi đang trong chu kỳ bình thường.
     // ----------------------------------------------------------
-void _case_uu_tien_bat(uint8_t nodeNhanLenh, ThongTinHeThong& tt) {
+    void _case_uu_tien_bat(uint8_t nodeNhanLenh, ThongTinHeThong& tt) {
         bool dangChay = (tt.trangThai == TrangThai::GREEN ||
                          tt.trangThai == TrangThai::YELLOW ||
                          tt.trangThai == TrangThai::RED);
-        
+        tt.co_lenh_uu_tien = true;
+        tt.lenh_uu_tien    = nodeNhanLenh;
         // --- ĐOẠN NÀY ĐÃ FIX LỖI CÚ PHÁP CỦA HUYNH ---
         if (_la_lenh_cua_minh(nodeNhanLenh, tt.nodeId)) {
             // Nếu đúng Node mình thì mới bật Xanh full
             if (dangChay) {
                 Serial.printf("[LENH] [%lu ms] Nhan BAT_UU_TIEN -> Node %s BAT XA_KET\n",
                               tt.hien_tai, (tt.nodeId == NodeID::NODE_A ? "A" : "B"));
-                ChuyenTrangThai::sang_xa_ket(tt);
+                tt.luotTiepTheo_LaXanh = false;
+                //ChuyenTrangThai::sang_xa_ket(tt);
             }
         } else {
             // Nếu lệnh dành cho Node kia thì mình phải Ép Đỏ
             if (dangChay) {
                 Serial.printf("[LENH] [%lu ms] Nhan BAT_UU_TIEN -> Node %s bi EP_DO\n",
                               tt.hien_tai, (tt.nodeId == NodeID::NODE_A ? "A" : "B"));
-                ChuyenTrangThai::sang_ep_do(tt);
+                tt.luotTiepTheo_LaXanh = true;
+                //ChuyenTrangThai::sang_ep_do(tt);
             }
         }
     }
@@ -100,7 +115,8 @@ void _case_uu_tien_bat(uint8_t nodeNhanLenh, ThongTinHeThong& tt) {
             // Node đối diện đang bị ép đỏ -> Tiếp tục giữ Đỏ cho đến khi Pi gửi Mode mới
             Serial.printf("[LENH] [%lu ms] Nhan TAT_UU_TIEN (node kia) -> Sang CHO_MODE_MOI\n",
                           tt.hien_tai);
-            ChuyenTrangThai::sang_cho_mode_moi(tt);
+            tt.daGuiRun = false;
+            ChuyenTrangThai::sang_do_dem(tt);
         }
     }
 

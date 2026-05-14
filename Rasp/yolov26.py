@@ -8,12 +8,8 @@ class Yolo_AI:
         self.class_names = class_names
 
     def detect(self, processed_frame, brightness_val):
-        """
-        Thực hiện nhận diện và thống kê.
-        - Trả về: dict kết quả (không chứa base64) và tổng số xe.
-        """
         try:
-            # 1️⃣ CHẠY DỰ ĐOÁN YOLO
+            # 1CHẠY DỰ ĐOÁN YOLO
             results = self.model.predict(processed_frame, conf=0.4)
             
             if not results or len(results) == 0:
@@ -22,7 +18,7 @@ class Yolo_AI:
             # Vẽ khung bao (Vẫn vẽ để hiển thị lên web)
             img_out = results[0].plot()
 
-            # 2️⃣ THỐNG KÊ SỐ LƯỢNG THEO LỚP
+            # THỐNG KÊ SỐ LƯỢNG THEO LỚP
             num_classes = len(self.class_names)
             counts = [0] * num_classes
 
@@ -35,7 +31,7 @@ class Yolo_AI:
 
             total = sum(counts)
 
-            # 3️⃣ ĐÓNG GÓI DỮ LIỆU (CHỈ GỬI FRAME DẠNG MẢNG)
+            # ĐÓNG GÓI DỮ LIỆU (CHỈ GỬI FRAME DẠNG MẢNG)
             res = {
                 "counts": counts,             
                 "xe_local": total,

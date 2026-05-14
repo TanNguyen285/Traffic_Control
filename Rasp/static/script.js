@@ -1,14 +1,14 @@
 /**
  * TRAFFIC CONTROL SYSTEM - REALTIME SSE VERSION
  */
-let traffic_chart = null; 
-let is_history_loaded = false; 
-let current_mode = "single";  // "single" hoặc "branch"
+let traffic_chart = null;
+let is_history_loaded = false;
+let current_mode = "single";
 
-const originalImg = document.getElementById("anhgoc");
+const originalImg  = document.getElementById("anhgoc");
 const processedImg = document.getElementById("sauxuly");
-const modeStatus = document.getElementById("mode");
-const totalxe = document.getElementById("tongxe");
+const modeStatus   = document.getElementById("mode");
+const totalxe      = document.getElementById("tongxe");
 
 // --- 1. KHỞI TẠO BIỂU ĐỒ ---
 function initChart() {
@@ -20,15 +20,17 @@ function initChart() {
         data: {
             labels: [],
             datasets: [{
-                label: 'Tổng số xe',
+                label: 'Số xe',
                 data: [],
                 detailedCounts: [],
                 borderColor: '#e74c3c',
-                backgroundColor: 'rgba(231, 76, 60, 0.2)',
-                borderWidth: 3,
+                backgroundColor: 'rgba(231, 76, 60, 0.15)',
+                borderWidth: 2.5,
                 pointRadius: 5,
+                pointBackgroundColor: '#e74c3c',
                 fill: true,
-                tension: 0.3
+                tension: 0.3,
+                spanGaps: true
             }]
         },
         options: {
@@ -38,11 +40,22 @@ function initChart() {
             plugins: {
                 tooltip: {
                     callbacks: {
+                        label: function(ctx) {
+                            return `Xe: ${ctx.parsed.y}`;
+                        },
                         footer: function(tooltipItems) {
-                            const index = tooltipItems[0].dataIndex;
-                            const cls = traffic_chart.data.datasets[0].detailedCounts[index];
+                            const idx = tooltipItems[0].dataIndex;
+                            const cls = traffic_chart.data.datasets[0].detailedCounts[idx];
                             if (!cls) return '';
-                            return ['', `🚌 Bus: ${cls[0]}`, `🚗 Car: ${cls[1]}`, `🛵 Motor: ${cls[2]}`, `🚛 Truck: ${cls[3]}`, `🚐 Van: ${cls[4]}`].join('\n');
+                            // YOLO_CLASSES = ['car','van','bus','motorcycle','truck']
+                            return [
+                                '',
+                                `🚗 Car: ${cls[0]}`,
+                                `🚐 Van: ${cls[1]}`,
+                                `🚌 Bus: ${cls[2]}`,
+                                `🛵 Motor: ${cls[3]}`,
+                                `🚛 Truck: ${cls[4]}`
+                            ].join('\n');
                         }
                     }
                 }
@@ -51,20 +64,16 @@ function initChart() {
     });
 }
 
-// --- 2. HÀM ĐẨY DỮ LIỆU VÀO CHART ---
+// --- 2. ĐẨY DỮ LIỆU VÀO CHART ---
 function pushToChart(item) {
     if (!traffic_chart || !item) return;
-    const ds = traffic_chart.data.datasets[0];
+
+    const ds     = traffic_chart.data.datasets[0];
     const labels = traffic_chart.data.labels;
 
-    const displayTime = item.time || new Date().toLocaleTimeString('it-IT');
-
-    // TẠM THỜI COMMENT DÒNG NÀY ĐỂ TEST:
-    // if (labels.length > 0 && labels[labels.length - 1] === displayTime) return;
-
-    labels.push(displayTime);
+    labels.push(item.time || new Date().toLocaleTimeString('it-IT'));
     ds.data.push(item.xe_local || 0);
-    ds.detailedCounts.push(item.counts || [0,0,0,0,0]);
+    ds.detailedCounts.push(item.counts || [0, 0, 0, 0, 0]);
 
     if (labels.length > 50) {
         labels.shift();
@@ -73,57 +82,29 @@ function pushToChart(item) {
     }
 }
 
-// --- 3. HÀM ĐIỀU PHỐI CHÍNH (Xử lý SSE Data) ---
+// --- 3. XỬ LÝ SSE DATA ---
 function xulyKetQua(dataRaw) {
     if (!dataRaw) return;
 
+    // Lịch sử ban đầu
     if (Array.isArray(dataRaw)) {
-        // Nạp lịch sử ban đầu
         if (!is_history_loaded) {
-            console.log("Nạp lịch sử từ SSE...");
             dataRaw.forEach(item => pushToChart(item));
             is_history_loaded = true;
             if (traffic_chart) traffic_chart.update();
         }
-    } else {
-        // Cập nhật Realtime cho các biến text và ảnh
-        console.log("Cập nhật UI từ SSE...");
-        if (totalxe) totalxe.textContent = dataRaw.xe_local ?? "0";
-        if (dataRaw.final_cmd) capnhat_trangthai(dataRaw.final_cmd);
-        
-        // Cập nhật ảnh
-        updateImages("/static/current_input.jpg", "/static/current_yolo.jpg");
-
-        // Yêu cầu quan trọng: Tự đọc file JSON vật lý để cập nhật Chart
-        fetchAndProcessJSON();
+        return;
     }
+
+    // Kết quả AI realtime
+    if (totalxe) totalxe.textContent = dataRaw.xe_local ?? "0";
+    if (dataRaw.final_cmd) capnhat_trangthai(dataRaw.final_cmd);
+    updateImages("/static/current_input.jpg", "/static/current_yolo.jpg");
+    pushToChart(dataRaw);
+    if (traffic_chart) traffic_chart.update('none');
 }
 
-// --- 4. HÀM ĐỌC FILE JSON VẬT LÝ (Chỉ dành cho Chart) ---
-async function fetchAndProcessJSON() {
-    try {
-        // Thêm timestamp để chắc chắn không bị dính cache trình duyệt
-        const response = await fetch("/get_log_data?v=" + Date.now());
-        const data = await response.json();
-        
-        console.log("Dữ liệu nhận từ RAM Server:", data);
-
-        if (Array.isArray(data) && data.length > 0) {
-            const latest_item = data[data.length - 1];
-            
-            // Đẩy vào biểu đồ
-            pushToChart(latest_item);
-            
-            // Vẽ lại biểu đồ ngay lập tức
-            if (traffic_chart) {
-                traffic_chart.update('none'); 
-            }
-        }
-    } catch (err) {
-        console.error("Lỗi Fetch dữ liệu:", err);
-    }
-}
-
+// --- 4. CẬP NHẬT ẢNH ---
 function updateImages(input_url, yolo_url) {
     const ts = Date.now();
     if (input_url && originalImg) {
@@ -136,31 +117,31 @@ function updateImages(input_url, yolo_url) {
     }
 }
 
+// --- 5. CẬP NHẬT TRẠNG THÁI ---
 function capnhat_trangthai(cmd) {
     if (!modeStatus) return;
     let text = "", className = "";
     switch (cmd) {
-        case "A": case "B": text = "🔴 ĐÔNG (Ưu tiên xanh)"; className = "status-heavy"; break;
-        case "m2": text = "⚪ XẢ TRẠM (Khẩn cấp)"; className = "status-emergency"; break;
-        case "m1": text = "🟢 THÔNG THOÁNG"; className = "status-low"; break;
-        case "m3": text = "🟡 TRUNG BÌNH"; className = "status-medium"; break;
-        case "m4": text = "🟠 KHÁ ĐÔNG"; className = "status-high"; break;
-        default: text = "🔵 ĐANG ĐỢI DỮ LIỆU..."; className = "";
+        case "A": case "B": text = "🔴 ĐÔNG (Ưu tiên xanh)"; className = "status-heavy";     break;
+        case "m2":          text = "⚪ XẢ TRẠM (Khẩn cấp)";  className = "status-emergency"; break;
+        case "m1":          text = "🟢 THÔNG THOÁNG";         className = "status-low";       break;
+        case "m3":          text = "🟡 TRUNG BÌNH";           className = "status-medium";    break;
+        case "m4":          text = "🟠 KHÁ ĐÔNG";             className = "status-high";      break;
+        default:            text = "🔵 ĐANG ĐỢI DỮ LIỆU..."; className = "";
     }
     modeStatus.textContent = text;
     modeStatus.className = className;
 }
 
-// --- 5. KẾT NỐI SSE ---
+// --- 6. KẾT NỐI SSE ---
 function connectRealtime() {
     const eventSource = new EventSource("/stream_results?v=" + Date.now());
 
     eventSource.onmessage = (e) => {
         try {
-            const data = JSON.parse(e.data);
-            xulyKetQua(data);
+            xulyKetQua(JSON.parse(e.data));
         } catch (err) {
-            console.error("Lỗi parse dữ liệu SSE:", err);
+            console.error("Lỗi parse SSE:", err);
         }
     };
 
@@ -170,81 +151,48 @@ function connectRealtime() {
     };
 }
 
+// --- 7. KHỞI ĐỘNG ---
 window.addEventListener("DOMContentLoaded", () => {
     initChart();
     connectRealtime();
-    
-    // === KHỞI TẠO MODE BUTTONS ===
-    const modeSingleBtn = document.getElementById("modeSingleBtn");
-    const modeBranchBtn = document.getElementById("modeBranchBtn");
+
+    const modeSingleBtn  = document.getElementById("modeSingleBtn");
+    const modeBranchBtn  = document.getElementById("modeBranchBtn");
     const modeStatusText = document.getElementById("modeStatusText");
-    
-    // Tải chế độ đã lưu (nếu có)
+
     const savedMode = localStorage.getItem("traffic_mode") || "single";
     setMode(savedMode, modeSingleBtn, modeBranchBtn, modeStatusText);
-    
-    // Event listeners
+
     modeSingleBtn?.addEventListener("click", () => {
         setMode("single", modeSingleBtn, modeBranchBtn, modeStatusText);
         sendModeToServer("single");
     });
-    
     modeBranchBtn?.addEventListener("click", () => {
         setMode("branch", modeSingleBtn, modeBranchBtn, modeStatusText);
         sendModeToServer("branch");
     });
 });
 
-// === HÀM ĐỔI CHẾ ĐỘ ===
 function setMode(mode, singleBtn, branchBtn, statusText) {
     current_mode = mode;
     localStorage.setItem("traffic_mode", mode);
-    
-    // Cập nhật giao diện button
-    if (singleBtn) {
-        if (mode === "single") {
-            singleBtn.classList.add("active");
-        } else {
-            singleBtn.classList.remove("active");
-        }
-    }
-    
-    if (branchBtn) {
-        if (mode === "branch") {
-            branchBtn.classList.add("active");
-        } else {
-            branchBtn.classList.remove("active");
-        }
-    }
-    
-    // Cập nhật text trạng thái
+    if (singleBtn) singleBtn.classList.toggle("active", mode === "single");
+    if (branchBtn) branchBtn.classList.toggle("active", mode === "branch");
     if (statusText) {
-        if (mode === "single") {
-            statusText.textContent = "Chế độ: Đơn (Độc lập - Không cần Ethernet)";
-        } else {
-            statusText.textContent = "Chế độ: Nhánh (2 Trạm - Cần Ethernet)";
-        }
+        statusText.textContent = mode === "single"
+            ? "Chế độ: Đơn (Độc lập - Không cần Ethernet)"
+            : "Chế độ: Nhánh (2 Trạm - Cần Ethernet)";
     }
-    
-    console.log(`[MODE] Chế độ đã chuyển sang: ${mode}`);
 }
 
-// === GỬI CHẾ ĐỘ ĐẾN SERVER ===
 async function sendModeToServer(mode) {
     try {
         const response = await fetch("/set_mode", {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ mode: mode })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ mode })
         });
-        
-        if (response.ok) {
-            console.log(`[SERVER] Chế độ '${mode}' được gửi thành công`);
-        } else {
-            console.warn(`[SERVER] Lỗi gửi chế độ: ${response.status}`);
-        }
+        if (!response.ok) console.warn(`[SERVER] Lỗi gửi chế độ: ${response.status}`);
     } catch (err) {
         console.error("[SERVER] Lỗi gửi chế độ:", err);
     }
