@@ -9,6 +9,7 @@ const originalImg  = document.getElementById("anhgoc");
 const processedImg = document.getElementById("sauxuly");
 const modeStatus   = document.getElementById("mode");
 const totalxe      = document.getElementById("tongxe");
+const brightnessEl = document.getElementById("brightness");
 
 // --- 1. KHỞI TẠO BIỂU ĐỒ ---
 function initChart() {
@@ -98,7 +99,8 @@ function xulyKetQua(dataRaw) {
 
     // Kết quả AI realtime
     if (totalxe) totalxe.textContent = dataRaw.xe_local ?? "0";
-    if (dataRaw.final_cmd) capnhat_trangthai(dataRaw.final_cmd);
+    if (brightnessEl) brightnessEl.textContent = (dataRaw.brightness ?? 0).toFixed(1);
+    if (dataRaw.final_cmd) capnhat_trangthai(dataRaw.final_cmd, dataRaw.is_emergency ?? false);
     updateImages("/static/current_input.jpg", "/static/current_yolo.jpg");
     pushToChart(dataRaw);
     if (traffic_chart) traffic_chart.update('none');
@@ -118,15 +120,23 @@ function updateImages(input_url, yolo_url) {
 }
 
 // --- 5. CẬP NHẬT TRẠNG THÁI ---
-function capnhat_trangthai(cmd) {
+function capnhat_trangthai(cmd, is_emergency = false) {
     if (!modeStatus) return;
     let text = "", className = "";
     switch (cmd) {
         case "A": case "B": text = "🔴 ĐÔNG (Ưu tiên xanh)"; className = "status-heavy";     break;
-        case "m2":          text = "⚪ XẢ TRẠM (Khẩn cấp)";  className = "status-emergency"; break;
         case "m1":          text = "🟢 THÔNG THOÁNG";         className = "status-low";       break;
-        case "m3":          text = "🟡 TRUNG BÌNH";           className = "status-medium";    break;
-        case "m4":          text = "🟠 KHÁ ĐÔNG";             className = "status-high";      break;
+        case "m2":          
+            if (is_emergency) {
+                text = "⚪ XẢ TRẠM (Khẩn cấp)";
+                className = "status-emergency";
+            } else {
+                text = "🟡 KẸT NHẸ (Mức 2)";
+                className = "status-medium";
+            }
+            break;
+        case "m3":          text = "🟠 KẸT TRUNG BÌNH (Mức 3)";  className = "status-high";      break;
+        case "m4":          text = "🔴 KẸT NẶNG (Mức 4)";       className = "status-critical";  break;
         default:            text = "🔵 ĐANG ĐỢI DỮ LIỆU..."; className = "";
     }
     modeStatus.textContent = text;

@@ -6,7 +6,7 @@ class GLKA(nn.Module):
     def __init__(self, dim):
         super().__init__()
         self.dim = dim
-        self.K = 13  # [FIX 1] thiếu self.K → crash khi switch_to_deploy()
+        self.K = 13  #kích thước kernel sau gộp
 
         self.conv0 = nn.Conv2d(dim, dim, 5, padding=2, groups=dim)
         
@@ -39,9 +39,9 @@ class GLKA(nn.Module):
 
     def forward(self, x):
         global_conv = self.conv0(x) #Conv5x5, padding=2, groups=dim dùng để tạo feature map chung cho cả 4 branch sau đó mới áp attention và conv riêng biệt cho từng branch
-        anchor = global_conv * self.se(global_conv)
+        anchor = global_conv * self.se(global_conv) #Cơ chế chú ý đặc trưng ( cái gì quan trọng )
         
-        if self.reparam_conv is not None:
+        if self.reparam_conv is not None:# Cơ chế chú ý không gian , chỗ nào quan trọng
             branch_main = self.reparam_conv(global_conv) #chỉ dùng conv đã gộp sau khi deploy
         else:
             branch_main = self.branch1(global_conv) + self.branch2(global_conv) + \
@@ -54,9 +54,7 @@ class GLKA(nn.Module):
         w2, b2 = self._fuse_bn(self.branch2)
         w3, b3 = self._fuse_bn(self.branch3)
         w4, b4 = self._fuse_bn(self.branch4)
-
-        # [FIX 2] d phải khớp dilation thực tế của từng conv
-        # branch1: dilation=1, branch2: dilation=3, branch3: dilation=2, branch4: dilation=1
+        
         W_equiv = self._to_target_k(w1, 1) + self._to_target_k(w2, 3) + \
                   self._to_target_k(w3, 2) + self._to_target_k(w4, 3)
         B_equiv = b1 + b2 + b3 + b4

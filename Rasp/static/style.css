@@ -167,37 +167,37 @@ body {
 .result-image.active { display: block; }
 
 /* ========================
-    TRAFFIC LIGHTS & DENSITY
+    BRIGHTNESS & DENSITY
    ======================== */
-.traffic-light-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.brightness-panel {
+    margin-bottom: 15px;
 }
 
-.traffic-light-item {
+.brightness-display {
     display: flex;
+    justify-content: center;
     align-items: center;
-    gap: 15px;
-    padding: 12px 15px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(0,0,0,0.3);
+    padding: 20px;
     border-radius: 10px;
+    border: 1px solid rgba(0,212,255,0.1);
 }
 
-.light {
-    width: 35px; height: 35px;
-    border-radius: 50%;
-    opacity: 0.15;
-    transition: 0.4s;
+.brightness-value {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 2.2em;
+    font-weight: 700;
+    color: #00d4ff;
+    font-family: 'Courier New', monospace;
 }
 
-.traffic-light-item.active .light { opacity: 1; box-shadow: 0 0 15px currentColor; }
-.light.red { background: #ff4444; color: #ff4444; }
-.light.yellow { background: #ffaa00; color: #ffaa00; }
-.light.green { background: #44dd44; color: #44dd44; }
-
-.light-info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
-.light-info b { font-family: monospace; color: #00d4ff; font-size: 1.3em; }
+.brightness-unit {
+    font-size: 0.7em;
+    color: #88aadd;
+    font-weight: 500;
+}
 
 .density-display {
     display: grid;

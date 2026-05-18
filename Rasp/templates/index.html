@@ -11,8 +11,8 @@
 
     <header class="header">
         <div class="header-content">
-            <h1 class="title">Hệ thống Điều khiển Giao thông</h1>
-            <div class="status-panel">YOLOv26 AI Engine</div>
+            <h1 class="title">Hệ Thống Điều khiển Giao thông</h1>
+            <div class="status-panel">AI Engine</div>
         </div>
     </header>
 <!-- main content -->
@@ -40,18 +40,13 @@
                 </div>
 <!-- traffic light and density status -->
                 <div class="config-section">
-                    <div class="traffic-light-panel">
-                        <div class="section-title">Đèn Giao Thông</div>
-                        <div class="traffic-light-container">
-                            {% for color, label, id_prefix in [('green','Xanh','green'), ('yellow','Vàng','yellow'), ('red','Đỏ','red')] %}
-                            <div class="traffic-light-item active" id="status{{ color|capitalize }}">
-                                <div class="light {{ color }}"></div>
-                                <div class="light-info">
-                                    <span>{{ label }}</span>
-                                    <b id="{{ id_prefix }}Time">0s</b>
-                                </div>
+                    <div class="brightness-panel">
+                        <h3 class="section-title">Độ Sáng Camera</h3>
+                        <div class="brightness-display">
+                            <div class="brightness-value">
+                                <span id="brightness">0.0</span>
+                                <span class="brightness-unit">%</span>
                             </div>
-                            {% endfor %}
                         </div>
                     </div>
 

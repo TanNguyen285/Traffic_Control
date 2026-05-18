@@ -11,7 +11,7 @@ from camera import Camera
 from yolov26 import Yolo_AI
 from uart_service import UART_config
 from tienxulyanh import Tienxulyanh
-from logicmain import TrafficLogic
+from logic_fix import TrafficLogic
 from cnn_onnx import Simple_CNN_config
 from ethernet import EthernetService
 from ROI import ROIManager
