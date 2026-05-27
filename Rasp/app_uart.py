@@ -84,26 +84,12 @@ def stream_results():
 def uart_event_worker():
     while True:
         if engine.bien_run:
-            print("\n" + "="*50)
-            print(f"[DEBUG SYSTEM] BẮT ĐẦU CHU KỲ AI - Chế độ: {engine.operation_mode.upper()}")
-            print("="*50)
-
             result_new, cmd = engine.thuc_thi_AI()
 
             if result_new is not None:
                 result_new["time"] = time.strftime("%H:%M:%S")
                 json_log.update_storage(result_new)
                 push_sse(result_new)
-
-                print(f"--- THÔNG SỐ GIAO TIẾP ---")
-                print(f"  > Kết nối Trạm kia: {'[OK]' if result_new['remote_connected'] else '[MẤT KẾT NỐI]'}")
-                print(f"  > Trạm Local ({engine.id}): {result_new['cnn_status']} | {result_new['xe_local']} xe")
-                if result_new['remote_connected']:
-                    print(f"  > Trạm Remote: {'KẸT' if result_new['remote_jam'] else 'THOÁNG'} | {result_new['xe_remote']} xe")
-                print(f"  > LỆNH CUỐI (UART): {cmd}")
-                print("="*50 + "\n")
-
-            engine.bien_run = False
 
         time.sleep(0.1)
 

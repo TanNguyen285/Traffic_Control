@@ -6,14 +6,14 @@ from model_sci import Finetunemodel
 from ROI import ROIManager
 
 # ─────────────────────────────────────────────────────────────────────────────
-# TINH CHỈNH ĐỘ SÁNG  — chỉnh 1 số này thôi
-#   SCI_BOOST : [1.0 → 3.0+]  nhân sáng ảnh SCI lên
-#               1.0 = giữ nguyên output SCI
-#               1.5 = sáng hơn 50%
-#               2.0 = sáng gấp đôi  (thử từ đây nếu vẫn tối)
-#               3.0 = rất sáng, có thể bị trắng vùng highlight
+# TINH CHỈNH — chỉnh 1 số này
+#   SCI_BOOST : nhân hệ số trên float [0,1] TRƯỚC khi clip → không vỡ nét
+#               1.0 = đúng output gốc SCI
+#               1.5 = sáng hơn 50%, giữ nét
+#               2.0 = sáng gấp đôi
+#               (vùng đã sáng sẽ clip tại 1.0 nhưng vùng tối được kéo đúng)
 # ─────────────────────────────────────────────────────────────────────────────
-SCI_BOOST = 2
+SCI_BOOST = 1.5
 
 
 class Tienxulyanh:
@@ -42,9 +42,10 @@ class Tienxulyanh:
         return np.percentile(v_channel, 95) / 255.0
 
     # ─────────────────────────────────────────────────────────────────────────
-    # SCI + BOOST
-    #   convertScaleAbs nhân pixel * SCI_BOOST, clip tự động 0-255
-    #   giữ nguyên nét, không blur, không pha gốc
+    # SCI đúng theo tác giả:
+    #   1. tensor float → model → lấy r (float [0,1])
+    #   2. nhân SCI_BOOST TRÊN FLOAT trước khi clip → không vỡ nét
+    #   3. clip [0,1] → *255 → uint8 (đúng save_images của tác giả)
     # ─────────────────────────────────────────────────────────────────────────
     def module_sci(self, frame):
         if self.sci_net is None:
@@ -58,15 +59,17 @@ class Tienxulyanh:
             with torch.no_grad():
                 _, r = self.sci_net(img_tensor)
 
-            enhanced_numpy = r[0].permute(1, 2, 0).cpu().numpy()
-            enhanced_bgr   = cv2.cvtColor(
-                (np.clip(enhanced_numpy, 0, 1) * 255).astype(np.uint8),
-                cv2.COLOR_RGB2BGR
-            )
+            # Đúng logic tác giả: lấy r[0], transpose → float numpy
+            image_numpy = r[0].cpu().float().numpy()           # (C, H, W)
+            image_numpy = np.transpose(image_numpy, (1, 2, 0)) # (H, W, C)
 
-            # Nhân sáng vượt ngưỡng SCI, clip tự động tại 255
-            result = cv2.convertScaleAbs(enhanced_bgr, alpha=SCI_BOOST, beta=0)
-            return result
+            # Boost TRÊN FLOAT trước khi clip — giữ tỉ lệ sáng/tối, không vỡ nét
+            image_numpy = image_numpy * SCI_BOOST
+
+            # Clip và convert đúng như save_images của tác giả
+            enhanced_rgb = np.clip(image_numpy * 255.0, 0, 255).astype(np.uint8)
+            enhanced_bgr = cv2.cvtColor(enhanced_rgb, cv2.COLOR_RGB2BGR)
+            return enhanced_bgr
 
         except Exception as e:
             print(f"⚠️ SCI Error: {e}")
@@ -88,7 +91,7 @@ class Tienxulyanh:
 
         # 2. SCI + boost trên ảnh gốc (trước khi che đen)
         frame_enhanced = frame.copy()
-        if self.use_sci and self.brightness < 0.3:
+        if self.use_sci and self.brightness < 0.4:
             frame_enhanced = self.module_sci(frame)
 
         # 3. Áp ROI sau khi đã làm sáng
