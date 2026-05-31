@@ -1,34 +1,33 @@
-B1: download code từ github
-# git clone https://github.com/TanNguyen285/Traffic_Control.git
+#=================================================================
+# 1. Tạo file service hệ thống
+#=================================================================
 
-B2: tạo môi trường ảo
-# python3 -m venv (tên môi trường ảo)
-# ví dụ: python3 -m venv yolo
+sudo nano /etc/systemd/system/traffic_ai.service
+#copy nội dung ở traffic_ai.serveic --> Ctrl+O --> Enter --> Ctrl+X
 
-B3: kích hoạt môi trường ảo
-# source yolo/bin/activate
-
-B4: cài đặt các thư viện cần thiết
-# pip install -r Huongdan/requirement.txt
-pip install flask ultralytics opencv-python numpy torch torchvision pillow
-
-sau bước này cứ test hệ thống oke thì ms qua làm serveic
-B5: chỉnh file yolo_flask.sh
-# chỉnh sửa file yolo_flask.sh, thay đường dẫn môi trường ảo và app.py cho đúng
-
-B6: chạy lệnh cho phép thực thi file yolo_flask.sh
-# chmod +x yolo_flask.sh
-
-B7: Tạo file service cho systemd (tự động chạy khi cắm nguồn)
-# sudo nano /etc/systemd/system/yolo_flask.service
-# dán nội dung sau vào file yolo_flask.service
-# Ctrl+O để lưu, Ctrl+X để thoát
-
-B8: reload systemd và enable service
-# sudo systemctl daemon-reload
-# sudo systemctl enable yolo_flask.service
-# sudo systemctl start yolo_flask.service
-
-B9: kiểm tra trạng thái service
-# sudo systemctl status yolo_flask.service ( xem có lỗi gì không )
-#journalctl -u flask_app -f ( xem log chi tiết )
+#=================================================================
+# 2. Bắt đầu chạy hệ thống AI ngầm
+#=================================================================
+sudo systemctl daemon-reload
+sudo systemctl enable traffic_ai.service
+#Tự thay đổi path dẫn và tên user tùy theo mỗi pi
+#=================================================================
+# 3. Lệnh chạy nhanh nếu muốn 
+#=================================================================
+nano ~/.bashrc
+#Kéo xuống cuối past vào
+===============================================================================================================
+alias traffic-on="sudo systemctl start traffic_ai.service && echo '[OK] Đã bật 2.4Ghz & Đang chạy Traffic AI...'"
+alias traffic-off="sudo systemctl stop traffic_ai.service && echo '[OK] Đã dừng Traffic AI & Giải phóng tài nguyên'"
+alias traffic-reset="sudo systemctl restart traffic_ai.service && echo '[OK] Đã khởi động lại toàn bộ hệ thống Traffic AI'"
+alias traffic-status="systemctl status traffic_ai.service"
+alias traffic-log="journalctl -u traffic_ai.service -n 50 -f"
+=================================================================================
+# Lưu và cập nhật lại terminal
+source ~/.bashrc
+==================================================================================
+traffic-on : Bật
+traffic-off : Tắt
+traffic-reset : Khởi động lại hệ thống
+traffic-log : log debug của hệ thống
+traffic-status : Trạng thái hệ thống

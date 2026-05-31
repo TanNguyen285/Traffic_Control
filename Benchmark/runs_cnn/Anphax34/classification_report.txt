@@ -1,0 +1,11 @@
+Overall Accuracy: 0.9819
+
+              precision    recall  f1-score   support
+
+  0_khongket     1.0000    0.9631    0.9812       488
+     1_ketxe     0.9656    1.0000    0.9825       505
+
+    accuracy                         0.9819       993
+   macro avg     0.9828    0.9816    0.9819       993
+weighted avg     0.9825    0.9819    0.9819       993
+

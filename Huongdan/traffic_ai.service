@@ -1,0 +1,14 @@
+[Unit]
+Description=Raspberry Pi 5 Traffic AI System
+After=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/lagct2/Desktop/RaspB
+User=lagct2
+ExecStart=/home/lagct2/Desktop/yolo/bin/python /home/lagct2/Desktop/RaspB/app_uart.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
