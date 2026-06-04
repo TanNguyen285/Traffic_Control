@@ -1,33 +1,51 @@
 #=================================================================
-# 1. Tạo file service hệ thống
+# 1. Tạo file service hệ thống (Traffic AI & OLED)
 #=================================================================
 
+# --- Tạo dịch vụ Traffic AI ---
 sudo nano /etc/systemd/system/traffic_ai.service
-#copy nội dung ở traffic_ai.serveic --> Ctrl+O --> Enter --> Ctrl+X
+# Copy nội dung file traffic_ai.service vào --> Ctrl+O --> Enter --> Ctrl+X
+
+# --- Tạo dịch vụ Màn hình OLED ---
+sudo nano /etc/systemd/system/oled.service
+# Copy nội dung file oled.service vào --> Ctrl+O --> Enter --> Ctrl+X
+
 
 #=================================================================
-# 2. Bắt đầu chạy hệ thống AI ngầm
+# 2. Bắt đầu chạy hệ thống ngầm
 #=================================================================
 sudo systemctl daemon-reload
+
+# Kích hoạt cả 2 dịch vụ tự động chạy khi khởi động Pi
 sudo systemctl enable traffic_ai.service
-#Tự thay đổi path dẫn và tên user tùy theo mỗi pi
+sudo systemctl enable oled.service
+
+# Tự thay đổi path dẫn và tên user tùy theo mỗi pi
+
+
 #=================================================================
-# 3. Lệnh chạy nhanh nếu muốn 
+# 3. Lệnh chạy nhanh nếu muốn (Cấu hình Alias)
 #=================================================================
 nano ~/.bashrc
-#Kéo xuống cuối past vào
-===============================================================================================================
-alias traffic-on="sudo systemctl start traffic_ai.service && echo '[OK] Đã bật 2.4Ghz & Đang chạy Traffic AI...'"
-alias traffic-off="sudo systemctl stop traffic_ai.service && echo '[OK] Đã dừng Traffic AI & Giải phóng tài nguyên'"
-alias traffic-reset="sudo systemctl restart traffic_ai.service && echo '[OK] Đã khởi động lại toàn bộ hệ thống Traffic AI'"
-alias traffic-status="systemctl status traffic_ai.service"
-alias traffic-log="journalctl -u traffic_ai.service -n 50 -f"
-=================================================================================
-# Lưu và cập nhật lại terminal
+# Kéo xuống cuối cùng và paste đoạn dưới đây vào:
+
+#===============================================================================================================
+alias traffic-on="sudo systemctl start traffic_ai.service oled.service && echo '[OK] Đã bật Hệ thống & Màn hình OLED...'"
+alias traffic-off="sudo systemctl stop traffic_ai.service oled.service && echo '[OK] Đã dừng Traffic AI & OLED (Giải phóng tài nguyên)'"
+alias traffic-reset="sudo systemctl restart traffic_ai.service oled.service && echo '[OK] Đã khởi động lại toàn bộ Traffic AI & OLED'"
+alias traffic-status="echo '--- TRAFFIC AI ---' && systemctl status traffic_ai.service --no-pager -n 0 && echo '--- OLED ---' && systemctl status oled.service --no-pager -n 0"
+alias traffic-log="journalctl -u traffic_ai.service -u oled.service -n 50 -f"
+#===============================================================================================================
+
+# Lưu lại (Ctrl+O -> Enter -> Ctrl+X) và cập nhật lại terminal:
 source ~/.bashrc
-==================================================================================
-traffic-on : Bật
-traffic-off : Tắt
-traffic-reset : Khởi động lại hệ thống
-traffic-log : log debug của hệ thống
-traffic-status : Trạng thái hệ thống
+
+
+#==================================================================================
+# 4. Hướng dẫn các phím tắt nhanh sau khi cấu hình:
+#==================================================================================
+# traffic-on     : Bật đồng thời Traffic AI và màn hình OLED
+# traffic-off    : Tắt đồng thời Traffic AI và màn hình OLED
+# traffic-reset  : Khởi động lại toàn bộ hệ thống (AI & OLED)
+# traffic-status : Kiểm tra trạng thái hoạt động của cả 2 dịch vụ
+# traffic-log    : Xem log debug gom chung của cả AI và OLED theo thời gian thực (Ctrl+C để thoát)

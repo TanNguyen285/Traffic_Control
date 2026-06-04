@@ -1,0 +1,14 @@
+[Unit]
+Description=Raspberry Pi 5 OLED Status Display
+After=multi-user.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/lagct2/Desktop/OLED_I2C
+User=lagct2
+ExecStart=/home/lagct2/Desktop/OLED_I2C/pi_status
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
