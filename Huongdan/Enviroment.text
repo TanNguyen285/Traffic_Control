@@ -1,36 +1,41 @@
 #=================================================================
-# 1. Tối ưu hệ thống & Dọn dẹp dung lượng trước
+#===================Python3.10.11=================================
 #=================================================================
-sudo apt update && sudo apt upgrade -y
-sudo apt purge libreoffice* wolfram-engine scratch* sonic-pi -y
-sudo apt autoremove -y
-sudo apt clean
+# 1. Cài đặt các thư viện cần thiết để build Python
 
-#=================================================================
-# 2. Cài đặt toàn bộ dependencies hệ thống (Gom lại 1 lần)
-#=================================================================
-sudo apt install -y build-essential libssl-dev zlib1g-dev libncurses5-dev \
-libgdbm-dev libnss3-dev libsqlite3-dev libreadline-dev libffi-dev curl \
-libbz2-dev liblzma-dev libopenblas-dev libgomp1 libjpeg-dev
+sudo apt update
+sudo apt install -y build-essential libssl-dev zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libsqlite3-dev libreadline-dev libffi-dev curl libbz2-dev
+sudo apt install liblzma-dev -y
 
-#=================================================================
-# 3. Tải và biên dịch Python 3.10.11
-#=================================================================
-cd ~
-wget https://python.org/ftp/python/3.10.11/Python-3.10.11.tgz
+# 2. Tải mã nguồn Python 3.10.11
+
+wget https://www.python.org/ftp/python/3.10.11/Python-3.10.11.tgz
 tar -xf Python-3.10.11.tgz
 cd Python-3.10.11
+
+# 3. Biên dịch (Lưu ý dùng altinstall để KHÔNG ghi đè Python hệ thống)
+
 ./configure --enable-optimizations
 make -j$(nproc)  
 sudo make altinstall
 
-# Dọn dẹp source code sau khi cài xong cho sạch máy
+# Dọn dẹp bộ cài sau khi compile xong cho sạch máy
 cd ~
 rm -rf Python-3.10.11 Python-3.10.11.tgz
 
 #=================================================================
-# 4. Tải Source Code từ GitHub
+#===================Tối ưu hệ thống===============================
 #=================================================================
+
+sudo apt purge libreoffice* wolfram-engine scratch* sonic-pi -y
+sudo apt autoremove -y
+sudo apt clean
+rm -rf ~/.cache/pip
+
+#=================================================================
+#===================Repo_Tracffic_Control==========================
+#=================================================================
+
 cd ~/Desktop
 wget https://github.com/TanNguyen285/Traffic_Control/archive/refs/heads/main.zip
 unzip main.zip
@@ -38,26 +43,30 @@ rm main.zip
 cd Traffic_Control-main
 
 #=================================================================
-# 5. Khởi tạo Venv và Cài đặt thư viện Python
+#===================Venv (môi trường ảo)==========================
 #=================================================================
+
 python3.10 -m venv yolo
 source yolo/bin/activate
 
 # Cập nhật pip trong môi trường ảo trước
 pip install --upgrade pip
 
-# Cài đặt các thư viện AI & Giao tiếp phần cứng
+#=================================================================
+#=====================Thư viện cần thiết =========================
+#=================================================================
+
+sudo apt install -y libatlas-base-dev libopenblas-dev libgomp1 libjpeg-dev zlib1g-dev
 pip install --no-cache-dir Flask numpy Pillow pyserial
 pip install --no-cache-dir opencv-python-headless
 pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
-pip install --no-cache-dir ultralytics ncnn onnxruntime
-
-rm -rf ~/.cache/pip
-echo "=== ĐÃ HOÀN THÀNH CÀI ĐẶT ==="
-
+pip install --no-cache-dir ultralytics
+pip install ncnn
+pip install onnxruntime
 
 #=================================================================
-# 6. Tắt Desktop và Bật khi cần ( Tối ưu RAM )
+#===================Tối ưu RAM (Tắt Desktop)======================
 #=================================================================
+
 sudo systemctl set-default multi-user.target
 # bật lại desktop : startx
