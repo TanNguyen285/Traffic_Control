@@ -1,12 +1,9 @@
-
-import subprocess
 import torch
+import socket
+import subprocess
 from ultralytics import YOLO
 from torchvision import transforms
-from Simple_Anpha import Simple_GLKA
-import socket
 
-# Import các Class của bạn
 from camera import Camera
 from yolov26 import Yolo_AI
 from uart_service import UART_config
@@ -16,81 +13,120 @@ from cnn_onnx import Simple_CNN_config
 from ethernet import EthernetService
 from ROI import ROIManager
 
-#==========================================
-# Cấu hình và khởi tạo hệ thống============
-#==========================================
+
+# ─────────────────────────────────────────────────────────────────────────────
+# CẤU HÌNH HỆ THỐNG
+# ─────────────────────────────────────────────────────────────────────────────
 class Config:
-    YOLO_PATH = "runs/Yolo/best_ncnn_model"
-    CNN_PATH = "runs/Anpha/simple_anpha.onnx"  
-    SCI_PATH = "runs/SCI/difficult.pt"
-    DEVICE = torch.device("cpu")
+    YOLO_PATH   = "runs/Yolo/best_ncnn_model"
+    CNN_PATH    = "runs/Anpha/simple_anpha.onnx"
+    SCI_PATH    = "runs/SCI/difficult.pt"
+    DEVICE      = torch.device("cpu")
     CNN_CLASSES = ["Thong Thoang", "Ket Xe"]
     YOLO_CLASSES = ['car', 'van', 'bus', 'motorcycle', 'truck']
     ROI = [
-        [20, 640],   # 1. Đáy trái: Sát mép trái và dưới cùng (Rộng ra)
-        [220, 20],   # 2. Đỉnh trái: Đẩy lên rất cao và hơi rộng ra (Dài ra)
-        [420, 20],   # 3. Đỉnh phải: Đối xứng với đỉnh trái (Dài ra)
-        [620, 640]   # 4. Đáy phải: Sát mép phải và dưới cùng (Rộng ra)
+        [20,  640],
+        [220,  20],
+        [420,  20],
+        [620, 640],
     ]
+    MY_PORT = 9999
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# KHỞI TẠO HỆ THỐNG
+# ─────────────────────────────────────────────────────────────────────────────
 def init_system():
+    # 1. Nhận diện trạm theo hostname
     h_name = socket.gethostname().lower()
-    # --- CẤU HÌNH TẬP TRUNG TẠI ĐÂY ---
-    MY_PORT = 9999  # Cổng mặc định cho EthernetService, có thể thay đổi nếu cần
-    # ----------------------------------
     if h_name == 'lagct':
-        s_id = 'TRAM_A'
+        s_id       = 'TRAM_A'
         p_hostname = 'lagct2.local'
     else:
-        s_id = 'TRAM_B'
+        s_id       = 'TRAM_B'
         p_hostname = 'lagct.local'
-    # Truyền biến MY_PORT vào Class
-    eth_service = EthernetService(station_id=s_id, peer_hostname=p_hostname, port=MY_PORT)
-    # Hardware
-    cam = Camera(src=0) 
+
+    print(f"[SYSTEM] Khởi động {s_id} — peer: {p_hostname}")
+
+    # 2. Ethernet
+    eth_service = EthernetService(
+        station_id=s_id,
+        peer_hostname=p_hostname,
+        port=Config.MY_PORT,
+    )
+
+    # 3. Hardware
+    cam  = Camera(src=0)
     cam.start()
     uart = UART_config(port="/dev/ttyAMA0", baudrate=115200)
-    # 2.1 Khởi tạo ROIManager để vẽ hiển thị
-    ROI_lane = ROIManager(polygon_pts=Config.ROI)
-    # 2.2 Pre-processing
-    pre_proc = Tienxulyanh(
-        sci_path=Config.SCI_PATH, 
-        target_size=(480, 480), 
-        use_sci=True,
-        polygon_pts=Config.ROI
-    )
-    # 3. YOLO AI
-    yolo_model = YOLO(Config.YOLO_PATH)
-    ai_yolo = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
 
-    # 4. CNN Service
+    # 4. ROI — 1 instance duy nhất, dùng chung cho AI lẫn web stream
+    #    Nếu roi_config.json đã tồn tại (user đã vẽ tay) thì ROIManager
+    #    tự load file đó, bỏ qua polygon_pts mặc định bên dưới.
+    ROI_lane = ROIManager(polygon_pts=Config.ROI)
+
+    # 5. Pre-processing — truyền roi_manager để share cùng polygon
+    #    Web chỉnh ROI → save_points() → AI áp dụng ngay, không restart
+    pre_proc = Tienxulyanh(
+        sci_path=Config.SCI_PATH,
+        target_size=(480, 480),
+        use_sci=True,
+        roi_manager=ROI_lane,
+    )
+
+    # 6. YOLO
+    yolo_model = YOLO(Config.YOLO_PATH)
+    ai_yolo    = Yolo_AI(yolo_model, class_names=Config.YOLO_CLASSES)
+
+    # 7. CNN
     cnn_transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])#tham số chuẩn hóa ảnh theo ImageNet
+        transforms.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std =[0.229, 0.224, 0.225],
+        ),
     ])
     cnn_service = Simple_CNN_config(
         model_path=Config.CNN_PATH,
         transform=cnn_transform,
-        classes=Config.CNN_CLASSES, 
+        classes=Config.CNN_CLASSES,
     )
-    # 5. Traffic Engine (Dùng biến s_id đã tự động nhận diện)
+
+    # 8. Traffic Engine
     engine = TrafficLogic(
-        yolo_ai=ai_yolo, 
-        cnn_service=cnn_service, 
-        pre_proc=pre_proc, 
-        uart=uart, 
+        yolo_ai=ai_yolo,
+        cnn_service=cnn_service,
+        pre_proc=pre_proc,
+        uart=uart,
         cam=cam,
         eth_service=eth_service,
-        station_id=s_id, # Truyền s_id vào đây
-    )       
-    # Đăng ký callback cho UART
-    uart.start_listening(engine.uart_esp32_rasp)
-    #bật 2.4Ghz để ổn định xung chạy AI và giảm độ trễ
-    subprocess.run(
-        "echo performance | sudo tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor",
-        shell=True, capture_output=True
+        station_id=s_id,
     )
-    print("[SYSTEM] CPU governor: performance mode")
+
+    # 9. UART callback
+    uart.start_listening(engine.uart_esp32_rasp)
+
+    # 10. CPU performance mode
+    _set_cpu_performance()
 
     return engine, cam, Config, ROI_lane
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# HELPERS
+# ─────────────────────────────────────────────────────────────────────────────
+def _set_cpu_performance():
+    cmd = ("echo performance | "
+           "sudo -S tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor")
+    try:
+        subprocess.run(
+            cmd,
+            shell=True,
+            input="a\n",          # sudo password
+            text=True,
+            capture_output=True,
+        )
+        print("[SYSTEM] CPU governor: performance mode")
+    except Exception as e:
+        print(f"[SYSTEM] Lỗi kích hoạt performance mode: {e}")

@@ -2,7 +2,7 @@
   {
     "timestamp": "2026-05-31 11:33:14",
     "platform": "cpu",
-    "device": "cpu",
+    "device": "pi5",
     "warmup": 50,
     "test_iters": 300,
     "n_runs": 3,
@@ -268,6 +268,288 @@
         "p95_ms": 2.4079050577711314,
         "fps": 440.7912540860941,
         "run_stability": 0.003627819137824714
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-06-04 16:11:06",
+    "platform": "cpu",
+    "device": "pi4",
+    "warmup": 50,
+    "test_iters": 300,
+    "n_runs": 3,
+    "results": [
+      {
+        "label": "CNN",
+        "type": "pytorch",
+        "device": "cpu",
+        "mean_ms": 255.8302158749955,
+        "median_ms": 255.16171949971067,
+        "p95_ms": 265.3495138500148,
+        "fps": 3.9088424194920854,
+        "run_stability": 2.0721063398909543
+      },
+      {
+        "label": "Anpha+",
+        "type": "pytorch",
+        "device": "cpu",
+        "mean_ms": 360.9438432881815,
+        "median_ms": 359.95316400021693,
+        "p95_ms": 371.0009605002824,
+        "fps": 2.7705140802238013,
+        "run_stability": 0.24567722663519342
+      },
+      {
+        "label": "Anphax",
+        "type": "pytorch",
+        "device": "cpu",
+        "mean_ms": 358.04058889584826,
+        "median_ms": 357.3928089999754,
+        "p95_ms": 368.6838827501333,
+        "fps": 2.7929794303039026,
+        "run_stability": 0.6999415957654634
+      },
+      {
+        "label": "Anphax34",
+        "type": "pytorch",
+        "device": "cpu",
+        "mean_ms": 332.71353181252533,
+        "median_ms": 332.1175389999098,
+        "p95_ms": 341.45696400005363,
+        "fps": 3.005588605165214,
+        "run_stability": 0.7141365579646045
+      },
+      {
+        "label": "CBAM",
+        "type": "pytorch",
+        "device": "cpu",
+        "mean_ms": 366.4388308229339,
+        "median_ms": 366.9267959994613,
+        "p95_ms": 376.09536904978995,
+        "fps": 2.728968427702488,
+        "run_stability": 0.6367805255686236
+      },
+      {
+        "label": "GLKAconv1x1",
+        "type": "pytorch",
+        "device": "cpu",
+        "mean_ms": 348.99680125694016,
+        "median_ms": 347.7630514998964,
+        "p95_ms": 359.45535144965106,
+        "fps": 2.8653557751773633,
+        "run_stability": 7.41102095989802
+      },
+      {
+        "label": "CNN",
+        "type": "onnx",
+        "device": "cpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 51.465200694442125,
+        "median_ms": 51.06452700010777,
+        "p95_ms": 53.57435904998055,
+        "fps": 19.430605273205373,
+        "run_stability": 0.15747767400293175
+      },
+      {
+        "label": "Anpha+",
+        "type": "onnx",
+        "device": "cpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 85.14548634029653,
+        "median_ms": 84.37627749981402,
+        "p95_ms": 91.35608940014208,
+        "fps": 11.744603771518223,
+        "run_stability": 0.10747168301258903
+      },
+      {
+        "label": "Anphax",
+        "type": "onnx",
+        "device": "cpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 85.29295474655088,
+        "median_ms": 84.59534200028429,
+        "p95_ms": 91.37788220014045,
+        "fps": 11.724297780180239,
+        "run_stability": 0.040782822301801164
+      },
+      {
+        "label": "Anphax34",
+        "type": "onnx",
+        "device": "cpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 74.70233253820564,
+        "median_ms": 74.13595750040258,
+        "p95_ms": 80.16320260016981,
+        "fps": 13.386462858955062,
+        "run_stability": 0.07823439106202003
+      },
+      {
+        "label": "CBAM",
+        "type": "onnx",
+        "device": "cpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 84.92451779860251,
+        "median_ms": 84.24821600010546,
+        "p95_ms": 91.96410849986022,
+        "fps": 11.77516253164355,
+        "run_stability": 0.022651007691368845
+      },
+      {
+        "label": "GLKAconv1x1",
+        "type": "onnx",
+        "device": "cpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 84.30305159026514,
+        "median_ms": 83.5868340000161,
+        "p95_ms": 91.19319115006874,
+        "fps": 11.861966810647155,
+        "run_stability": 0.011885715678046188
+      }
+    ]
+  },
+  {
+    "timestamp": "2026-06-08 18:18:33",
+    "platform": "gpu",
+    "device": "gpu",
+    "warmup": 500,
+    "test_iters": 2000,
+    "n_runs": 5,
+    "results": [
+      {
+        "label": "CNN",
+        "type": "pytorch",
+        "device": "gpu",
+        "mean_ms": 5.322236516078314,
+        "median_ms": 5.448080062866211,
+        "p95_ms": 6.317158579826355,
+        "fps": 187.89093588363286,
+        "run_stability": 0.394236749795102
+      },
+      {
+        "label": "Anpha+",
+        "type": "pytorch",
+        "device": "gpu",
+        "mean_ms": 2.6404729172587396,
+        "median_ms": 2.4268798828125,
+        "p95_ms": 4.826638412475583,
+        "fps": 378.7200366509232,
+        "run_stability": 0.06775670635326582
+      },
+      {
+        "label": "Anphax",
+        "type": "pytorch",
+        "device": "gpu",
+        "mean_ms": 2.4970379997044803,
+        "median_ms": 2.302896022796631,
+        "p95_ms": 4.398401498794555,
+        "fps": 400.4744822138662,
+        "run_stability": 0.12148793622627362
+      },
+      {
+        "label": "Anphax34",
+        "type": "pytorch",
+        "device": "gpu",
+        "mean_ms": 2.125592667174836,
+        "median_ms": 1.9588800072669983,
+        "p95_ms": 3.718297517299649,
+        "fps": 470.457023795212,
+        "run_stability": 0.05702730559474827
+      },
+      {
+        "label": "CBAM",
+        "type": "pytorch",
+        "device": "gpu",
+        "mean_ms": 2.571000398695469,
+        "median_ms": 2.4258240461349487,
+        "p95_ms": 3.761195206642148,
+        "fps": 388.9536541913421,
+        "run_stability": 0.02698432911466663
+      },
+      {
+        "label": "GLKAconv1x1",
+        "type": "pytorch",
+        "device": "gpu",
+        "mean_ms": 2.4821607815722624,
+        "median_ms": 2.3002400398254395,
+        "p95_ms": 4.048591828346251,
+        "fps": 402.87478854072265,
+        "run_stability": 0.07715826427740995
+      },
+      {
+        "label": "CNN",
+        "type": "onnx",
+        "device": "gpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 1.4043318215650895,
+        "median_ms": 1.3970000436529517,
+        "p95_ms": 1.5165100223384798,
+        "fps": 712.0824185878856,
+        "run_stability": 0.0030715236382457493
+      },
+      {
+        "label": "Anpha+",
+        "type": "onnx",
+        "device": "gpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 2.3130271871195873,
+        "median_ms": 2.305799862369895,
+        "p95_ms": 2.438899828121066,
+        "fps": 432.3338720654209,
+        "run_stability": 0.02012592262179257
+      },
+      {
+        "label": "Anphax",
+        "type": "onnx",
+        "device": "gpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 2.313410415930169,
+        "median_ms": 2.296100021339953,
+        "p95_ms": 2.444224979262799,
+        "fps": 432.2622536468191,
+        "run_stability": 0.006194633426655554
+      },
+      {
+        "label": "Anphax34",
+        "type": "onnx",
+        "device": "gpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 2.1068939568067435,
+        "median_ms": 2.1053499076515436,
+        "p95_ms": 2.216635108925402,
+        "fps": 474.6323357990085,
+        "run_stability": 0.03999624455174352
+      },
+      {
+        "label": "CBAM",
+        "type": "onnx",
+        "device": "gpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 2.455247081403892,
+        "median_ms": 2.448800136335194,
+        "p95_ms": 2.5790048646740615,
+        "fps": 407.29098410258877,
+        "run_stability": 0.0051488747362917935
+      },
+      {
+        "label": "GLKAconv1x1",
+        "type": "onnx",
+        "device": "gpu",
+        "provider": "CPUExecutionProvider",
+        "mean_ms": 2.343222446870641,
+        "median_ms": 2.3349501425400376,
+        "p95_ms": 2.4591149762272835,
+        "fps": 426.76272640503845,
+        "run_stability": 0.016332076156400258
+      },
+      {
+        "label": "YOLO_traffic",
+        "type": "yolo",
+        "device": "gpu",
+        "mean_ms": 4.556218594492141,
+        "median_ms": 3.940099850296974,
+        "p95_ms": 7.532100065145642,
+        "fps": 219.4802508397789,
+        "run_stability": 0.11199376395437996
       }
     ]
   }

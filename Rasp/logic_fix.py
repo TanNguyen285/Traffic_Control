@@ -25,7 +25,7 @@ class TrafficLogic:
         self.ket_local    = False
         self.xe_local     = 0
         self.yolo_results = {"counts": [0, 0, 0, 0, 0], "yolo_image": None}
-
+        self.frame_enhanced = None
         self._last_uart_cmd = None
 
     def set_mode(self, mode: str) -> bool:
@@ -51,7 +51,7 @@ class TrafficLogic:
         if not ret or frame is None:
             return False
         self.frame_raw = frame
-        self.frame_cnn, self.frame_yolo, self.brightness = \
+        self.frame_cnn, self.frame_yolo, self.frame_enhanced, self.brightness = \
             self.pre_proc.input_yolo_cnn(frame, skip_roi=False)
         return True
 
@@ -60,8 +60,10 @@ class TrafficLogic:
             return False
         status_local, conf, _ = self.cnn.predict(self.frame_cnn)
         self.ket_local = (status_local == "Ket Xe")
-        self.frame_raw = self.cnn.draw_prediction(self.frame_raw, status_local, conf)
-        cv2.imwrite(os.path.join(BASE_DIR, "static", "current_input.jpg"), self.frame_raw)
+        # Dùng frame_enhanced thay frame_raw để hiển thị ảnh đã làm sáng
+        display_frame = self.frame_enhanced if self.frame_enhanced is not None else self.frame_raw
+        display_frame = self.cnn.draw_prediction(display_frame, status_local, conf)
+        cv2.imwrite(os.path.join(BASE_DIR, "static", "current_input.jpg"), display_frame)
         return self.ket_local
 
     def module_chay_yolo(self) -> int:

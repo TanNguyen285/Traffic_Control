@@ -17,12 +17,22 @@ SCI_BOOST = 1.5
 
 
 class Tienxulyanh:
-    def __init__(self, sci_path, target_size=(480, 480), use_sci=True, polygon_pts=None):
+    def __init__(self, sci_path, target_size=(480, 480), use_sci=True,
+                 polygon_pts=None, roi_manager=None):
+        """
+        roi_manager : truyền vào 1 ROIManager đã tạo sẵn (vd cùng instance với
+                      ROI_lane trong app.py) để AI và web stream LUÔN dùng
+                      chung 1 ROI — vẽ tay đổi ROI ở web là AI áp dụng ngay,
+                      không cần restart.
+                      Nếu không truyền (None) thì tự tạo riêng như cũ
+                      (dùng polygon_pts/config mặc định) — chỉ nên dùng khi
+                      chạy Tienxulyanh độc lập, không kèm app.py.
+        """
         self.target_size = target_size
         self.use_sci     = use_sci
         self.device      = torch.device('cpu')  # pi
         self.transform   = transforms.ToTensor()
-        self.roi_manager = ROIManager(polygon_pts)
+        self.roi_manager = roi_manager if roi_manager is not None else ROIManager(polygon_pts)
 
         self.sci_net = None
         if self.use_sci:
@@ -80,31 +90,27 @@ class Tienxulyanh:
     # ─────────────────────────────────────────────────────────────────────────
     def input_yolo_cnn(self, frame, skip_roi=False, debug=True):
         if frame is None:
-            return None, None, 0.0
+            return None, None, None, 0.0   # thêm None cho frame_enhanced
 
-        # 1. Đo brightness trên vùng ROI
         if not skip_roi:
             roi_only        = self.roi_manager.apply_roi(frame.copy())
             self.brightness = self.ttanhsang(roi_only)
         else:
             self.brightness = self.ttanhsang(frame)
 
-        # 2. SCI + boost trên ảnh gốc (trước khi che đen)
         frame_enhanced = frame.copy()
         if self.use_sci and self.brightness < 0.4:
             frame_enhanced = self.module_sci(frame)
 
-        # 3. Áp ROI sau khi đã làm sáng
         if not skip_roi:
             frame_ai = self.roi_manager.apply_roi(frame_enhanced)
         else:
             frame_ai = frame_enhanced
 
-        # 4. Đầu ra CNN và YOLO
         frame_cnn  = cv2.resize(frame_ai, (224, 224))
         frame_yolo = self.letterbox(frame_ai, self.target_size)
 
-        return frame_cnn, frame_yolo, self.brightness
+        return frame_cnn, frame_yolo, frame_enhanced, self.brightness  # +frame_enhanced
 
     def letterbox(self, img, new_shape=(480, 480), color=(114, 114, 114)):
         shape     = img.shape[:2]

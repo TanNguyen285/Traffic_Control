@@ -64,9 +64,18 @@
                 <div class="camera-box">
                     <div class="camera-label">
                         <span class="live-dot"></span> Camera Live Stream A
+                        <button id="roiDrawBtn" type="button" class="btn-roi">ROI</button>
                     </div>
                     <!-- Sử dụng thẻ <img> để hiển thị luồng video từ Flask, đảm bảo src trỏ đến đúng endpoint cung cấp luồng video -->
-                    <img id="cameraPreview" class="camera-video" src="/camera_stream" alt="Stream"> 
+                    <div class="camera-stage" id="cameraStage">
+                        <img id="cameraPreview" class="camera-video" src="/camera_stream" alt="Stream">
+                        <canvas id="roiCanvas" class="roi-canvas"></canvas>
+                    </div>
+                    <div id="roiEditBar" class="roi-edit-bar" style="display:none;">
+                        <span class="roi-edit-hint">Kéo 8 điểm rồi bấm Lưu</span>
+                        <button id="roiSaveBtn" type="button" class="btn-roi-save">💾 Lưu</button>
+                        <button id="roiCancelBtn" type="button" class="btn-roi-cancel">✖ Hủy</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -108,5 +117,6 @@
     </main>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='roi-editor.js') }}"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 """
-CNN Benchmark Visualization — Line Chart
-Output: benchmark_report.png
+CNN Benchmark Visualization — Bar Chart (tách pytorch / onnx)
+Output: benchmark_pytorch.png, benchmark_onnx.png
 """
 
 import json, os, sys
@@ -34,14 +34,11 @@ matplotlib.rcParams.update({
 
 RESULT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                            "cnn_benchmark_results.json")
-OUT_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                        "benchmark_report.png")
 
 MODEL_ORDER = ["CNN", "Anphax34", "GLKAconv1x1", "Anpha+", "CBAM", "Anphax"]
 
-# ── Map tên platform cũ → chuẩn ─────────────────────────────
 PLATFORM_REMAP = {
-    "cpu": "pi5",   # đang chạy trên Pi5
+    "cpu": "pi5",
     "cuda": "gpu",
     "gpu": "gpu",
     "pi5": "pi5",
@@ -49,9 +46,9 @@ PLATFORM_REMAP = {
 }
 
 DEVICE_STYLE = {
-    "gpu": dict(label="RTX (GPU)",       color="#0066CC", marker="o", markersize=8, linewidth=2.5, zorder=4),
-    "pi5": dict(label="Raspberry Pi 5",  color="#00AA55", marker="s", markersize=8, linewidth=2.5, zorder=3),
-    "pi4": dict(label="Raspberry Pi 4",  color="#FF9900", marker="^", markersize=8, linewidth=2.5, zorder=2),
+    "gpu":  dict(label="RTX (GPU)",      color="#0066CC"),
+    "pi5":  dict(label="Raspberry Pi 5", color="#00AA55"),
+    "pi4":  dict(label="Raspberry Pi 4", color="#FF9900"),
 }
 DEVICE_ORDER = ["gpu", "pi5", "pi4"]
 
@@ -63,20 +60,20 @@ except FileNotFoundError:
     print(f"File not found: {RESULT_FILE}")
     sys.exit(1)
 
-# Chuẩn hóa platform
 for s in sessions:
-    raw = s.get("platform") or s.get("device", "cpu")
-    s["platform"] = PLATFORM_REMAP.get(raw, raw)
+    device   = s.get("device", "")
+    platform = s.get("platform", "")
+    if device in ("pi4", "pi5", "gpu"):
+        s["platform"] = device
+    else:
+        raw = platform or device or "cpu"
+        s["platform"] = PLATFORM_REMAP.get(raw, raw)
 
-# Lấy session mới nhất mỗi platform
 latest = {}
 for s in sessions:
     latest[s["platform"]] = s
 
 print(f"[INFO] Platforms found: {list(latest.keys())}")
-for plat, sess in latest.items():
-    types = set(r.get("type") for r in sess["results"])
-    print(f"  {plat}: {len(sess['results'])} results, types={types}")
 
 # ── Helper ───────────────────────────────────────────────────
 def get_vals(platform, run_type, metric):
@@ -91,100 +88,98 @@ def get_vals(platform, run_type, metric):
         return None
     return np.array([v if v is not None else np.nan for v in vals], dtype=float)
 
-def platform_has_onnx(platform):
+def platform_has_type(platform, run_type):
     if platform not in latest:
         return False
-    return any(r.get("type") == "onnx" for r in latest[platform]["results"])
+    return any(r.get("type") == run_type for r in latest[platform]["results"])
 
-# ── Figure ───────────────────────────────────────────────────
-x = np.arange(len(MODEL_ORDER))
+# ── Draw figure ───────────────────────────────────────────────
+def draw_figure(run_type, title_tag, out_file):
+    plats_available = [p for p in DEVICE_ORDER
+                       if p in latest and platform_has_type(p, run_type)]
+    if not plats_available:
+        print(f"[SKIP] Không có data cho run_type='{run_type}'")
+        return
 
-fig = plt.figure(figsize=(16, 7))
-fig.patch.set_facecolor("#FAFAFA")
-fig.text(0.5, 0.98, "CNN Benchmark Report",
-         ha="center", va="top", fontsize=20, fontweight="bold", color="#1A1A1A")
-fig.text(0.5, 0.955,
-         "RTX GPU  •  Raspberry Pi 5  •  Raspberry Pi 4   |   liền = PyTorch    đứt = ONNX",
-         ha="center", va="top", fontsize=11, color="#666666", style="italic")
+    n_models  = len(MODEL_ORDER)
+    n_plats   = len(plats_available)
+    bar_w     = 0.22
+    group_gap = 0.05
+    total_w   = n_plats * bar_w + group_gap
+    x_center  = np.arange(n_models) * (total_w + 0.25)
 
-gs = GridSpec(1, 2, figure=fig, wspace=0.30,
-              left=0.07, right=0.97, top=0.89, bottom=0.18)
-ax_fps = fig.add_subplot(gs[0, 0])
-ax_lat = fig.add_subplot(gs[0, 1])
+    fig = plt.figure(figsize=(16, 7))
+    fig.patch.set_facecolor("#FAFAFA")
+    fig.text(0.5, 0.98,
+             f"CNN Benchmark — {title_tag}",
+             ha="center", va="top", fontsize=20, fontweight="bold", color="#1A1A1A")
+    fig.text(0.5, 0.955,
+             "RTX GPU  •  Raspberry Pi 5  •  Raspberry Pi 4",
+             ha="center", va="top", fontsize=11, color="#666666", style="italic")
 
-def draw_lines(ax, metric, ylabel, title, annotfmt="{:.1f}"):
-    ax.set_facecolor("white")
-    ax.set_title(title, fontsize=13, fontweight="bold", pad=12, color="#1A1A1A")
-    ax.set_ylabel(ylabel, fontsize=11, fontweight="bold", color="#333333")
-    ax.set_xticks(x)
-    ax.set_xticklabels(MODEL_ORDER, fontsize=10, fontweight="bold",
-                       rotation=20, ha="right")
-    ax.grid(axis="y", alpha=0.2)
+    gs = GridSpec(1, 2, figure=fig, wspace=0.30,
+                  left=0.07, right=0.97, top=0.89, bottom=0.18)
+    ax_fps = fig.add_subplot(gs[0, 0])
+    ax_lat = fig.add_subplot(gs[0, 1])
 
-    all_y = []
+    def draw_bars(ax, metric, ylabel, title, annotfmt="{:.1f}"):
+        ax.set_facecolor("white")
+        ax.set_title(title, fontsize=13, fontweight="bold", pad=12, color="#1A1A1A")
+        ax.set_ylabel(ylabel, fontsize=11, fontweight="bold", color="#333333")
 
-    for plat in DEVICE_ORDER:
-        if plat not in latest:
-            continue
-        st = DEVICE_STYLE[plat]
+        all_y = []
+        offsets = np.linspace(-(n_plats - 1) / 2, (n_plats - 1) / 2, n_plats) * bar_w
 
-        # PyTorch — đường liền
-        y_pt = get_vals(plat, "pytorch", metric)
-        if y_pt is not None:
-            ax.plot(x, y_pt,
-                    color=st["color"], marker=st["marker"],
-                    linestyle="-", linewidth=st["linewidth"],
-                    markersize=st["markersize"], alpha=1.0,
-                    label=st["label"], zorder=st["zorder"])
-            for xi, yi in zip(x, y_pt):
+        for i, plat in enumerate(plats_available):
+            st = DEVICE_STYLE[plat]
+            y  = get_vals(plat, run_type, metric)
+            if y is None:
+                continue
+            xpos = x_center + offsets[i]
+            bars = ax.bar(xpos, np.nan_to_num(y), width=bar_w * 0.88,
+                          color=st["color"], alpha=0.85,
+                          label=st["label"], zorder=3,
+                          edgecolor="white", linewidth=0.5)
+            for xi, yi in zip(xpos, y):
                 if not np.isnan(yi):
                     ax.annotate(annotfmt.format(yi),
-                                xy=(xi, yi), xytext=(0, 7),
+                                xy=(xi, yi), xytext=(0, 4),
                                 textcoords="offset points",
                                 ha="center", fontsize=7.5,
                                 color=st["color"], fontweight="bold")
-            all_y.extend(y_pt[~np.isnan(y_pt)].tolist())
+            all_y.extend(y[~np.isnan(y)].tolist())
 
-        # ONNX — đường đứt
-        if platform_has_onnx(plat):
-            y_onnx = get_vals(plat, "onnx", metric)
-            if y_onnx is not None:
-                ax.plot(x, y_onnx,
-                        color=st["color"], marker=st["marker"],
-                        linestyle="--", linewidth=st["linewidth"] - 0.5,
-                        markersize=st["markersize"] - 2, alpha=0.55,
-                        label=st["label"] + " (ONNX)", zorder=st["zorder"])
-                for xi, yi in zip(x, y_onnx):
-                    if not np.isnan(yi):
-                        ax.annotate(annotfmt.format(yi),
-                                    xy=(xi, yi), xytext=(0, -13),
-                                    textcoords="offset points",
-                                    ha="center", fontsize=7.5,
-                                    color=st["color"], alpha=0.7)
-                all_y.extend(y_onnx[~np.isnan(y_onnx)].tolist())
+        ax.set_xticks(x_center)
+        ax.set_xticklabels(MODEL_ORDER, fontsize=10, fontweight="bold",
+                           rotation=20, ha="right")
+        ax.grid(axis="y", alpha=0.2)
 
-    # Log scale chỉ khi có data và range đủ rộng
-    if len(all_y) >= 2:
-        mn, mx = min(all_y), max(all_y)
-        if mx / (mn + 1e-9) > 20:
-            ax.set_yscale("log")
-            ax.yaxis.set_major_formatter(ticker.FuncFormatter(
-                lambda v, _: f"{v:.0f}" if v >= 10 else f"{v:.1f}"
-            ))
+        if len(all_y) >= 2:
+            mn, mx = min(all_y), max(all_y)
+            if mx / (mn + 1e-9) > 20:
+                ax.set_yscale("log")
+                ax.yaxis.set_major_formatter(ticker.FuncFormatter(
+                    lambda v, _: f"{v:.0f}" if v >= 10 else f"{v:.1f}"
+                ))
 
-    handles, labels = ax.get_legend_handles_labels()
-    if handles:
-        ax.legend(handles, labels, frameon=True, fontsize=8.5, loc="best",
-                  edgecolor="#CCCCCC", fancybox=True, framealpha=0.92)
+        handles, labels = ax.get_legend_handles_labels()
+        if handles:
+            ax.legend(handles, labels, frameon=True, fontsize=8.5, loc="best",
+                      edgecolor="#CCCCCC", fancybox=True, framealpha=0.92)
 
-draw_lines(ax_fps, "fps",     "FPS",          "FPS  (Higher = Better)",    annotfmt="{:.1f}")
-draw_lines(ax_lat, "mean_ms", "Latency (ms)", "Latency  (Lower = Better)", annotfmt="{:.0f}ms")
+    draw_bars(ax_fps, "fps",     "FPS",          "FPS  (Higher = Better)",    annotfmt="{:.1f}")
+    draw_bars(ax_lat, "mean_ms", "Latency (ms)", "Latency  (Lower = Better)", annotfmt="{:.0f}ms")
 
-plats_found = [p for p in DEVICE_ORDER if p in latest]
-fig.text(0.5, 0.01,
-         f"Platforms: {', '.join(plats_found)}  •  {len(sessions)} session(s)",
-         ha="center", fontsize=9, color="#999999")
+    plats_found = [p for p in DEVICE_ORDER if p in latest]
+    fig.text(0.5, 0.01,
+             f"Platforms: {', '.join(plats_found)}  •  {len(sessions)} session(s)  •  {title_tag}",
+             ha="center", fontsize=9, color="#999999")
 
-plt.savefig(OUT_FILE, facecolor="#FAFAFA", edgecolor="none")
-print(f"Saved → {OUT_FILE}")
-plt.close()
+    plt.savefig(out_file, facecolor="#FAFAFA", edgecolor="none")
+    print(f"Saved → {out_file}")
+    plt.close()
+
+# ── Export 2 file ─────────────────────────────────────────────
+base = os.path.dirname(os.path.abspath(__file__))
+draw_figure("pytorch", "PyTorch", os.path.join(base, "benchmark_pytorch.png"))
+draw_figure("onnx",    "ONNX",    os.path.join(base, "benchmark_onnx.png"))

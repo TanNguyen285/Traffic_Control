@@ -1,51 +1,55 @@
-#=================================================================
-# 1. Tạo file service hệ thống (Traffic AI & OLED)
-#=================================================================
+#================================================================
+# SYSTEMD SERVICE SETUP — Traffic AI & OLED
+#================================================================
 
-# --- Tạo dịch vụ Traffic AI ---
+# 0. QUYỀN & I2C (chạy 1 lần)
+sudo raspi-config nonint do_i2c 0          # bật I2C
+sudo usermod -aG i2c $USER                 # cần reboot để có hiệu lực
+sudo chmod +x ~/traffic_ai/*.py            # cấp quyền script
+i2cdetect -y 1                             # kiểm tra OLED (thường 0x3C)
+
+# 1. TẠO SERVICE FILES
 sudo nano /etc/systemd/system/traffic_ai.service
-# Copy nội dung file traffic_ai.service vào --> Ctrl+O --> Enter --> Ctrl+X
-
-# --- Tạo dịch vụ Màn hình OLED ---
 sudo nano /etc/systemd/system/oled.service
-# Copy nội dung file oled.service vào --> Ctrl+O --> Enter --> Ctrl+X
+# (Paste nội dung → Ctrl+O → Enter → Ctrl+X)
 
-
-#=================================================================
-# 2. Bắt đầu chạy hệ thống ngầm
-#=================================================================
+# 2. KÍCH HOẠT
 sudo systemctl daemon-reload
+sudo systemctl enable traffic_ai.service oled.service
+sudo systemctl start  traffic_ai.service oled.service
 
-# Kích hoạt cả 2 dịch vụ tự động chạy khi khởi động Pi
-sudo systemctl enable traffic_ai.service
-sudo systemctl enable oled.service
+# 3. KIỂM TRA
+sudo systemctl status traffic_ai.service oled.service
+sudo journalctl -u traffic_ai.service -u oled.service -f   # log realtime
 
-# Tự thay đổi path dẫn và tên user tùy theo mỗi pi
+# 4. REBOOT TEST
+sudo reboot
+# Sau reboot: sudo systemctl status traffic_ai.service oled.service
 
+#================================================================
+# ALIAS (thêm vào ~/.bashrc)
+#================================================================
+nano ~/.bashrc   # paste đoạn dưới vào cuối file
 
-#=================================================================
-# 3. Lệnh chạy nhanh nếu muốn (Cấu hình Alias)
-#=================================================================
-nano ~/.bashrc
-# Kéo xuống cuối cùng và paste đoạn dưới đây vào:
-
-#===============================================================================================================
-alias traffic-on="sudo systemctl start traffic_ai.service oled.service && echo '[OK] Đã bật Hệ thống & Màn hình OLED...'"
-alias traffic-off="sudo systemctl stop traffic_ai.service oled.service && echo '[OK] Đã dừng Traffic AI & OLED (Giải phóng tài nguyên)'"
-alias traffic-reset="sudo systemctl restart traffic_ai.service oled.service && echo '[OK] Đã khởi động lại toàn bộ Traffic AI & OLED'"
-alias traffic-status="echo '--- TRAFFIC AI ---' && systemctl status traffic_ai.service --no-pager -n 0 && echo '--- OLED ---' && systemctl status oled.service --no-pager -n 0"
+alias traffic-on="sudo systemctl start   traffic_ai.service oled.service && echo '[OK] Đã bật'"
+alias traffic-off="sudo systemctl stop   traffic_ai.service oled.service && echo '[OK] Đã dừng'"
+alias traffic-reset="sudo systemctl restart traffic_ai.service oled.service && echo '[OK] Đã restart'"
+alias traffic-status="systemctl status   traffic_ai.service oled.service --no-pager -n 0"
 alias traffic-log="journalctl -u traffic_ai.service -u oled.service -n 50 -f"
-#===============================================================================================================
+alias traffic-log-err="journalctl -u traffic_ai.service -u oled.service -p err -n 50 -f"
+alias traffic-i2c="i2cdetect -y 1"
+alias traffic-fix-perm="sudo chmod +x ~/traffic_ai/*.py && echo '[OK] chmod done'"
 
-# Lưu lại (Ctrl+O -> Enter -> Ctrl+X) và cập nhật lại terminal:
-source ~/.bashrc
+source ~/.bashrc   # áp dụng ngay
 
-
-#==================================================================================
-# 4. Hướng dẫn các phím tắt nhanh sau khi cấu hình:
-#==================================================================================
-# traffic-on     : Bật đồng thời Traffic AI và màn hình OLED
-# traffic-off    : Tắt đồng thời Traffic AI và màn hình OLED
-# traffic-reset  : Khởi động lại toàn bộ hệ thống (AI & OLED)
-# traffic-status : Kiểm tra trạng thái hoạt động của cả 2 dịch vụ
-# traffic-log    : Xem log debug gom chung của cả AI và OLED theo thời gian thực (Ctrl+C để thoát)
+#================================================================
+# QUICK REFERENCE
+# traffic-on        bật cả 2 service
+# traffic-off       tắt cả 2 service
+# traffic-reset     restart cả 2
+# traffic-status    xem trạng thái
+# traffic-log       xem log realtime (Ctrl+C thoát)
+# traffic-log-err   chỉ xem lỗi ERROR/WARNING
+# traffic-i2c       kiểm tra OLED trên I2C bus
+# traffic-fix-perm  chmod +x lại toàn bộ .py
+#================================================================

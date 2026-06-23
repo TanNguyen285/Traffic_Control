@@ -315,6 +315,46 @@ body {
     font-weight: 700;
 }
 
+.capture-section {
+    margin-top: 15px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-capture {
+    flex: 1;
+    padding: 16px 20px;
+    border: 2px solid #e74c3c;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s all;
+    font-size: 1em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+}
+
+.btn-capture:hover:not(:disabled) {
+    background: linear-gradient(135deg, #a93226, #e74c3c);
+    border-color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(231, 76, 60, 0.5);
+}
+
+.btn-capture:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn-capture:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 .mode-status {
     display: flex;
     align-items: center;
@@ -382,4 +422,113 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
     * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+/* ==========================================
+   ROI EDITOR — style riêng, không đụng style.css gốc
+   ========================================== */
+
+.camera-stage {
+    position: relative;
+    width: 100%;
+    flex-grow: 1;            /* thế chỗ flex-grow cũ vốn nằm trên .camera-video */
+    aspect-ratio: 16/9;
+    max-height: 720px;
+    background: #000;
+    border-radius: 10px;
+    border: 1px solid #0f3460;
+    overflow: hidden;
+}
+
+
+.camera-stage .camera-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    /* reset các thuộc tính dư từ rule .camera-video gốc, tránh viền/nền đúp */
+    flex-grow: initial;
+    aspect-ratio: auto;
+    max-height: none;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+}
+
+.roi-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* mặc định không bắt chuột, chỉ bật khi đang edit */
+}
+
+.roi-canvas.editing {
+    pointer-events: auto;
+    cursor: crosshair;
+}
+
+.btn-roi {
+    margin-left: 12px;
+    padding: 4px 12px;
+    border: none;
+    border-radius: 6px;
+    background: #87CEEB; /* xanh biển nhạt */
+    color: #14283a;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.btn-roi:hover {
+    background: #6fb8d6;
+}
+
+.btn-roi.active {
+    background: #4a9bc2;
+    color: #fff;
+}
+
+.roi-edit-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+    padding: 8px 10px;
+    background: rgba(135, 206, 235, 0.12);
+    border: 1px solid rgba(135, 206, 235, 0.4);
+    border-radius: 8px;
+}
+
+.roi-edit-hint {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    margin-right: auto;
+}
+
+.btn-roi-save,
+.btn-roi-cancel {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s ease;
+}
+
+.btn-roi-save {
+    background: #87CEEB;
+    color: #14283a;
+}
+
+.btn-roi-cancel {
+    background: #e0e0e0;
+    color: #333;
+}
+
+.btn-roi-save:hover,
+.btn-roi-cancel:hover {
+    opacity: 0.85;
 }
